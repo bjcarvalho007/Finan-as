@@ -12,11 +12,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#020617">
 
-<!-- Ícones para Android e iOS -->
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shield-check.svg">
-<link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shield-check.svg">
+<!-- Ícones para Android e iOS (SVG do Logo) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==">
 
-<!-- MANIFEST JSON DINÂMICO (CORRIGIDO PARA RECONHECIMENTO DE APP) -->
+<!-- MANIFEST JSON DINÂMICO -->
 <link rel="manifest" id="pwa-manifest">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -318,6 +318,7 @@ header {
       <button class="btn-add" onclick="openAddModal()">ADICIONAR</button>
     </header>
 
+    <!-- O RESTO DO HTML SEGUE IGUAL AO SEU CÓDIGO -->
     <div class="summary-grid">
       <div class="card card-full">
         <div class="card-label">Estimativa Total Devedora</div>
@@ -438,8 +439,10 @@ header {
 </div>
 
 <script>
-// CONFIGURAÇÃO DEFINITIVA DO MANIFEST E SERVICE WORKER PARA VERCEL
 const setupPWA = () => {
+  // ÍCONE REPLICADO DO HEADER (Escudo Verde com $)
+  const iconData = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==";
+  
   const manifest = {
     "name": "Meu Controle Financeiro",
     "short_name": "Finanças",
@@ -449,7 +452,7 @@ const setupPWA = () => {
     "theme_color": "#020617",
     "icons": [
       {
-        "src": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shield-check.svg",
+        "src": iconData,
         "sizes": "512x512",
         "type": "image/svg+xml",
         "purpose": "any maskable"
