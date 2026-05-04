@@ -121,6 +121,13 @@ header {
   margin-bottom: 4px;
 }
 
+.card-legend {
+  font-size: 0.55rem;
+  color: var(--accent);
+  font-weight: 800;
+  margin-top: 2px;
+}
+
 .card-value { 
   font-size: 1.25rem; 
   font-weight: 700; 
@@ -251,6 +258,8 @@ header {
   padding: 30px;
   padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -270,6 +279,54 @@ header {
   font-size: 1rem;
   outline: none;
 }
+
+/* NOVO SELETOR DE CATEGORIA PROFISSIONAL */
+.cat-selector-trigger {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cat-selector-trigger:active { transform: scale(0.98); border-color: var(--accent); }
+
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  display: none; /* Escondido por padrão */
+  animation: fadeIn 0.3s ease;
+}
+.cat-grid.show { display: grid; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cat-option {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cat-option.selected {
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.1);
+}
+.cat-option .icon { font-size: 1.4rem; margin-bottom: 4px; display: block; }
+.cat-option .label { font-size: 0.6rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; }
+.cat-option.selected .label { color: var(--accent); }
 
 .btn-primary { 
   background: var(--primary); color: var(--bg); border: none; padding: 18px; 
@@ -338,6 +395,7 @@ header {
       <div class="card">
         <div class="card-label">A pagar (Mês)</div>
         <div class="card-value" id="res-pending-month">R$ 0,00</div>
+        <div class="card-legend">- FIXO + VARIÁVEIS</div>
       </div>
       <div class="card">
         <div class="card-label">Pago</div>
@@ -396,38 +454,30 @@ header {
         <option value="parcelas">💳 Parcelamento</option>
       </select>
     </div>
+    
+    <div class="input-group">
+      <label>Categoria</label>
+      <div class="cat-selector-trigger" onclick="toggleCatGrid()">
+        <span id="selected-cat-display">🏠 Moradia (Aluguel/Luz)</span>
+        <span>▼</span>
+      </div>
+      <input type="hidden" id="in-cat" value="moradia">
+      <div class="cat-grid" id="cat-grid">
+        <!-- Renderizado via JavaScript -->
+      </div>
+    </div>
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
       <div class="input-group">
         <label>Valor (R$)</label>
         <input type="number" id="in-amount" step="0.01">
       </div>
       <div class="input-group">
-        <label>Categoria</label>
-        <select id="in-cat">
-          <option value="moradia">🏠 Moradia (Aluguel/Luz)</option>
-          <option value="mercado">🛒 Mercado/Alimentação</option>
-          <option value="transporte">🚗 Transporte/Combustível</option>
-          <option value="saude">🏥 Saúde/Farmácia</option>
-          <option value="educacao">📚 Educação/Cursos</option>
-          <option value="estetica">✨ Autocuidado/Beleza</option>
-          <option value="lazer">🎮 Lazer/Entretenimento</option>
-          <option value="restaurante">🍽️ Restaurante/Ifood</option>
-          <option value="assinaturas">💳 Assinaturas/Streaming</option>
-          <option value="comunicacao">🌐 Internet/Celular</option>
-          <option value="pet">🐾 Animais/Pet Shop</option>
-          <option value="vestuario">👕 Roupas/Acessórios</option>
-          <option value="casa">🛋️ Casa/Utensílios</option>
-          <option value="investimento">📈 Investimento/Reserva</option>
-          <option value="imposto">📄 Impostos/Taxas</option>
-          <option value="cartao">💳 Cartão de Crédito</option>
-          <option value="outros">📦 Outros Gastos</option>
-        </select>
+        <label>Data Vencimento</label>
+        <input type="text" id="in-due" placeholder="Dia 10">
       </div>
     </div>
-    <div class="input-group">
-      <label>Data Vencimento</label>
-      <input type="text" id="in-due" placeholder="Dia 10">
-    </div>
+
     <button class="btn-primary" onclick="saveExpense()">SALVAR</button>
     <button class="btn-ghost" onclick="toggleModal('modal-add', false)">CANCELAR</button>
   </div>
@@ -511,23 +561,23 @@ const setupPWA = () => {
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 const CATEGORIES = {
-  moradia: { icon: '🏠' },
-  mercado: { icon: '🛒' },
-  transporte: { icon: '🚗' },
-  saude: { icon: '🏥' },
-  educacao: { icon: '📚' },
-  estetica: { icon: '✨' },
-  lazer: { icon: '🎮' },
-  restaurante: { icon: '🍽️' },
-  assinaturas: { icon: '💳' },
-  comunicacao: { icon: '🌐' },
-  pet: { icon: '🐾' },
-  vestuario: { icon: '👕' },
-  casa: { icon: '🛋️' },
-  investimento: { icon: '📈' },
-  imposto: { icon: '📄' },
-  cartao: { icon: '💳' },
-  outros: { icon: '📦' }
+  moradia: { icon: '🏠', label: 'Moradia' },
+  mercado: { icon: '🛒', label: 'Mercado' },
+  transporte: { icon: '🚗', label: 'Transporte' },
+  saude: { icon: '🏥', label: 'Saúde' },
+  educacao: { icon: '📚', label: 'Educação' },
+  estetica: { icon: '✨', label: 'Beleza' },
+  lazer: { icon: '🎮', label: 'Lazer' },
+  restaurante: { icon: '🍽️', label: 'Comida' },
+  assinaturas: { icon: '💳', label: 'Stream' },
+  comunicacao: { icon: '🌐', label: 'Internet' },
+  pet: { icon: '🐾', label: 'Pets' },
+  vestuario: { icon: '👕', label: 'Roupas' },
+  casa: { icon: '🛋️', label: 'Casa' },
+  investimento: { icon: '📈', label: 'Invest.' },
+  imposto: { icon: '📄', label: 'Taxas' },
+  cartao: { icon: '💳', label: 'Cartão' },
+  outros: { icon: '📦', label: 'Outros' }
 };
 
 let curDate = new Date();
@@ -552,6 +602,7 @@ function load() {
   const saved = localStorage.getItem('bjc_financas_v4_dark');
   if (saved) state = JSON.parse(saved);
   syncData();
+  renderCatGrid();
 }
 
 function save() {
@@ -571,6 +622,35 @@ function syncData() {
   });
 }
 
+// LOGICA CATEGORIAS GRID
+function renderCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = Object.entries(CATEGORIES).map(([key, data]) => `
+    <div class="cat-option" id="cat-opt-${key}" onclick="selectCategory('${key}')">
+      <span class="icon">${data.icon}</span>
+      <span class="label">${data.label}</span>
+    </div>
+  `).join('');
+}
+
+function toggleCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  grid.classList.toggle('show');
+}
+
+function selectCategory(key) {
+  const data = CATEGORIES[key];
+  document.getElementById('in-cat').value = key;
+  document.getElementById('selected-cat-display').innerHTML = `${data.icon} ${data.label}`;
+  
+  document.querySelectorAll('.cat-option').forEach(opt => opt.classList.remove('selected'));
+  document.getElementById(`cat-opt-${key}`).classList.add('selected');
+  
+  setTimeout(() => {
+    document.getElementById('cat-grid').classList.remove('show');
+  }, 200);
+}
+
 // Lógica de Notificação e Verificação de Vencimento
 function checkExpiringBills() {
   const key = getDbKey();
@@ -583,7 +663,6 @@ function checkExpiringBills() {
   allCurrent.forEach(item => {
     const paid = item.paid_amount || 0;
     if (paid < item.amount) {
-      // Tenta extrair o dia da string (Ex: "Dia 10")
       const dayMatch = item.due.match(/\d+/);
       if (dayMatch) {
         const day = parseInt(dayMatch[0]);
@@ -593,7 +672,6 @@ function checkExpiringBills() {
         const diffTime = dueDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        // Se vence hoje ou em até 2 dias
         if (diffDays >= 0 && diffDays <= 2) {
           expiring.push({ ...item, diffDays });
         }
@@ -602,7 +680,6 @@ function checkExpiringBills() {
   });
 
   if (expiring.length > 0) {
-    // 1. Mostrar no App
     const list = document.getElementById('alert-list');
     list.innerHTML = expiring.map(i => `
       <div class="alert-item">
@@ -615,7 +692,6 @@ function checkExpiringBills() {
     `).join('');
     toggleModal('modal-alerts', true);
 
-    // 2. Tentar Notificação de Celular/Browser
     if ("Notification" in window) {
       if (Notification.permission === "granted") {
         new Notification("Contas Vencendo!", {
@@ -652,6 +728,7 @@ function render() {
   
   const allCurrent = [...monthData.fixos, ...monthData.variaveis];
   const totalMonthBruto = allCurrent.reduce((s, i) => s + i.amount, 0);
+  const totalFixosBruto = monthData.fixos.reduce((s, i) => s + i.amount, 0);
   
   const totalWithPrev = totalMonthBruto + prevDebt;
   const paidMonth = allCurrent.reduce((s, i) => s + (i.paid_amount || 0), 0);
@@ -662,7 +739,7 @@ function render() {
   document.getElementById('display-date').textContent = `${MONTHS[curMonth].toUpperCase()} ${curYear}`;
   document.getElementById('res-debt-bruta').textContent = fmt(bruteTotal);
   document.getElementById('res-pending-month').textContent = fmt(pendingMonth);
-  document.getElementById('res-total').textContent = fmt(totalMonthBruto); 
+  document.getElementById('res-total').textContent = fmt(totalFixosBruto); 
   document.getElementById('res-paid').textContent = fmt(paidMonth);
   document.getElementById('res-pending-installments').textContent = fmt(parcelasTotalPendente);
   document.getElementById('prev-debt-indicator').style.display = prevDebt > 0 ? 'block' : 'none';
@@ -702,7 +779,11 @@ function render() {
   }).join('');
 }
 
-function toggleModal(id, open) { document.getElementById(id).classList.toggle('open', open); }
+function toggleModal(id, open) { 
+  document.getElementById(id).classList.toggle('open', open); 
+  // Reset grid de categoria ao fechar
+  if(!open) document.getElementById('cat-grid').classList.remove('show');
+}
 
 function openAddModal() {
   document.getElementById('edit-id').value = '';
@@ -711,6 +792,7 @@ function openAddModal() {
   document.getElementById('in-amount').value = '';
   document.getElementById('in-due').value = '';
   document.getElementById('in-type').value = currentTab;
+  selectCategory('moradia');
   toggleModal('modal-add', true);
 }
 
@@ -774,7 +856,7 @@ function editItem(id) {
   document.getElementById('modal-title').textContent = 'Editar Registro';
   document.getElementById('in-name').value = item.name;
   document.getElementById('in-amount').value = item.amount;
-  document.getElementById('in-cat').value = item.cat;
+  selectCategory(item.cat);
   document.getElementById('in-due').value = item.due || '';
   document.getElementById('in-type').value = type;
   toggleModal('modal-add', true);
@@ -830,11 +912,10 @@ window.onload = () => {
   setupPWA();
   load(); 
   render(); 
-  // Solicita permissão de notificação e verifica vencimentos após carregamento
   if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
   }
-  setTimeout(checkExpiringBills, 1000); // Pequeno atraso para garantir o UX
+  setTimeout(checkExpiringBills, 1000);
 };
 </script>
 </body>
