@@ -364,6 +364,39 @@ header {
   align-items: center;
 }
 
+/* Botão de Ajuda Flutuante */
+.help-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 50px;
+  height: 50px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.tutorial-step {
+  margin-bottom: 24px;
+}
+.tutorial-step h4 {
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.tutorial-step p {
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
 @media (min-width: 600px) {
   .modal { border-radius: 24px; margin-bottom: 40px; }
   .modal-overlay { align-items: center; }
@@ -373,6 +406,11 @@ header {
 <body>
 
 <div id="toast">Sucesso!</div>
+
+<!-- Botão de Ajuda -->
+<div class="help-fab" onclick="toggleModal('modal-tutorial', true)">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+</div>
 
 <div class="scroll-container">
   <div class="app-container">
@@ -434,6 +472,35 @@ header {
         <p style="font-size: 0.7rem; font-weight: 700;">© 2026 BENEDITO JUNIOR</p>
       </div>
     </footer>
+  </div>
+</div>
+
+<!-- Modal Tutorial -->
+<div class="modal-overlay" id="modal-tutorial">
+  <div class="modal">
+    <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.4rem;">Como Funciona? 🚀</div>
+    
+    <div class="tutorial-step">
+      <h4>📌 Gastos Fixos</h4>
+      <p>Contas que se repetem todo mês (Ex: Aluguel). Quando você cria aqui, o app gera automaticamente para todos os meses futuros.</p>
+    </div>
+
+    <div class="tutorial-step">
+      <h4>📊 Gastos Variáveis</h4>
+      <p>Gastos pontuais que ocorrem apenas no mês selecionado (Ex: Uma compra específica de mercado ou farmácia).</p>
+    </div>
+
+    <div class="tutorial-step">
+      <h4>💳 Parcelamentos</h4>
+      <p>Contas com valor decrescente. Ao pagar, o valor total da dívida diminui até o item ser removido automaticamente.</p>
+    </div>
+
+    <div class="tutorial-step">
+      <h4>📅 Navegação Mensal</h4>
+      <p>Use as setas para planejar meses futuros ou conferir meses passados. O app avisa se houver pendências em meses anteriores!</p>
+    </div>
+
+    <button class="btn-primary" onclick="toggleModal('modal-tutorial', false)">ENTENDI, VAMOS LÁ!</button>
   </div>
 </div>
 
@@ -603,6 +670,15 @@ function load() {
   if (saved) state = JSON.parse(saved);
   syncData();
   renderCatGrid();
+  
+  // Lógica de tutorial apenas uma vez
+  const tutorialShown = localStorage.getItem('bjc_tutorial_shown');
+  if (!tutorialShown) {
+    setTimeout(() => {
+      toggleModal('modal-tutorial', true);
+      localStorage.setItem('bjc_tutorial_shown', 'true');
+    }, 1200);
+  }
 }
 
 function save() {
@@ -920,4 +996,5 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
