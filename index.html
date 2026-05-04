@@ -36,14 +36,13 @@
   --radius: 12px;
 }
 
-/* COMPORTAMENTO DE APP: BLOQUEIO DE SCROLL DO NAVEGADOR */
+/* COMPORTAMENTO DE APP: AJUSTADO PARA PULL-TO-REFRESH */
 html, body {
   height: 100%;
   width: 100%;
   overflow: hidden; 
   background-color: var(--bg);
-  position: fixed;
-  overscroll-behavior: none; /* Impede pull-to-refresh */
+  /* Retirado position fixed para permitir detecção de touch no refresh */
 }
 
 * { 
@@ -61,6 +60,20 @@ body {
   line-height: 1.5;
   display: flex;
   flex-direction: column;
+}
+
+/* Indicador de Refresh */
+#ptr-indicator {
+  height: 0;
+  overflow: hidden;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent);
+  transition: height 0.2s;
 }
 
 .scroll-container {
@@ -435,7 +448,12 @@ header {
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
 </div>
 
-<div class="scroll-container">
+<!-- Indicador de Pull to Refresh -->
+<div id="ptr-indicator">
+    <span id="ptr-text">SOLTE PARA ATUALIZAR</span>
+</div>
+
+<div class="scroll-container" id="main-scroll">
   <div class="app-container">
     <header>
       <div class="brand-title">
@@ -491,7 +509,7 @@ header {
 
     <footer>
       <div style="text-align: center; margin-top: 40px; color: var(--secondary);">
-        <p style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Todos Direitos Reservados</p>
+        <p style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Gerenciamento Seguro</p>
         <p style="font-size: 0.6rem; margin-bottom: 2px;">© 2026</p>
         <a href="https://wa.me/5563992092699?text=Ol%C3%A1%20Benedito%2C%20tenho%20d%C3%BAvidas%20sobre%20o%20app%20financeiro%20ou%20gostaria%20de%20fazer%20um%20or%C3%A7amento%20para%20um%20novo%20site." target="_blank" class="credits-btn">
            B.J.C (Dúvidas e Suporte)
@@ -610,7 +628,7 @@ header {
   </div>
 </div>
 
-<!-- Modal de Alertas de Vencimento -->
+<!-- Modal de Alertas de Vencimento (MODIFICADO COM CONTROLE DE REPETIÇÃO) -->
 <div class="modal-overlay" id="modal-alerts">
   <div class="modal">
     <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--danger);">
@@ -619,11 +637,17 @@ header {
     <div id="alert-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
       <!-- Itens de alerta inseridos via JS -->
     </div>
-    <button class="btn-primary" onclick="toggleModal('modal-alerts', false)">ENTENDI</button>
+    <button class="btn-primary" onclick="goToPayFirstAlert()">IR PARA PAGAR</button>
+    <button class="btn-ghost" style="color:var(--danger)" onclick="stopAlertSequence()">PARAR ESTES AVISOS</button>
+    <button class="btn-ghost" onclick="toggleModal('modal-alerts', false)">LEMBRAR EM 10s</button>
   </div>
 </div>
 
 <script>
+// --- VARIÁVEIS DE CONTROLE PARA O ALERTA RECORRENTE ---
+let alertSequenceInterval = null;
+let stopAllAlerts = false;
+
 const setupPWA = () => {
   const iconData = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==";
   
@@ -763,6 +787,46 @@ function selectCategory(key) {
   }, 200);
 }
 
+// --- FUNÇÕES DO ALERTA RECORRENTE (MODIFICADO) ---
+function startRecurringAlerts() {
+    if (stopAllAlerts) return;
+    
+    if (alertSequenceInterval) clearInterval(alertSequenceInterval);
+    
+    alertSequenceInterval = setInterval(() => {
+        if (!stopAllAlerts) {
+            checkExpiringBills();
+        }
+    }, 10000); // 10 Segundos
+}
+
+function stopAlertSequence() {
+    stopAllAlerts = true;
+    if (alertSequenceInterval) clearInterval(alertSequenceInterval);
+    toggleModal('modal-alerts', false);
+    showToast("Alertas silenciados.");
+}
+
+function goToPayFirstAlert() {
+    toggleModal('modal-alerts', false);
+    // Tenta encontrar o ID do primeiro item que disparou o alerta para abrir o modal de pagamento
+    const key = getDbKey();
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const all = [...state.months[key].fixos, ...state.months[key].variaveis];
+    const item = all.find(i => {
+        const paid = i.paid_amount || 0;
+        const dayMatch = i.due.match(/\d+/);
+        if (paid < i.amount && dayMatch) {
+            const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
+            const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            return diff >= 0 && diff <= 2;
+        }
+        return false;
+    });
+    if (item) openPayModal(item.id);
+}
+
 // Lógica de Notificação e Verificação de Vencimento
 function checkExpiringBills() {
   const key = getDbKey();
@@ -778,14 +842,12 @@ function checkExpiringBills() {
       const dayMatch = item.due.match(/\d+/);
       if (dayMatch) {
         const day = parseInt(dayMatch[0]);
-        // Garantir que a data de vencimento use o mês e ano atualmente exibidos
         const dueDate = new Date(curYear, curMonth, day);
         dueDate.setHours(0,0,0,0);
         
         const diffTime = dueDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        // Alerta entre hoje (0) e 2 dias de antecedência
         if (diffDays >= 0 && diffDays <= 2) {
           expiring.push({ ...item, diffDays });
         }
@@ -807,13 +869,11 @@ function checkExpiringBills() {
     
     toggleModal('modal-alerts', true);
 
-    if ("Notification" in window) {
-      if (Notification.permission === "granted") {
+    if ("Notification" in window && Notification.permission === "granted") {
         new Notification("Contas Vencendo!", {
-          body: `Você tem ${expiring.length} conta(s) que vencem em breve. Abra o app para conferir.`,
+          body: `Você tem ${expiring.length} conta(s) vencendo.`,
           icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg=='
         });
-      }
     }
   }
 }
@@ -894,7 +954,6 @@ function render() {
 
 function toggleModal(id, open) { 
   document.getElementById(id).classList.toggle('open', open); 
-  // Reset grid de categoria ao fechar
   if(!open) document.getElementById('cat-grid').classList.remove('show');
 }
 
@@ -947,7 +1006,6 @@ function saveExpense() {
   save(); 
   toggleModal('modal-add', false);
   showToast("Lançamento salvo!");
-  checkExpiringBills();
 }
 
 function editItem(id) {
@@ -1001,7 +1059,6 @@ function confirmPayment() {
   save(); 
   toggleModal('modal-pay', false);
   showToast("Pagamento registrado!");
-  checkExpiringBills();
 }
 
 function openConfirmModal(id) { currentDeleteId = id; toggleModal('modal-confirm', true); }
@@ -1021,7 +1078,36 @@ document.getElementById('btn-confirm-delete').onclick = () => {
 };
 
 function switchTab(t) { currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-${t}`)); render(); }
-function changeMonth(s) { curMonth += s; if (curMonth > 11) { curMonth = 0; curYear++; } else if (curMonth < 0) { curMonth = 11; curYear--; } syncData(); render(); checkExpiringBills(); }
+function changeMonth(s) { curMonth += s; if (curMonth > 11) { curMonth = 0; curYear++; } else if (curMonth < 0) { curMonth = 11; curYear--; } syncData(); render(); }
+
+// --- LOGICA DE PULL TO REFRESH ---
+let startY = 0;
+const scroller = document.getElementById('main-scroll');
+const indicator = document.getElementById('ptr-indicator');
+
+scroller.addEventListener('touchstart', (e) => {
+    if (scroller.scrollTop === 0) startY = e.touches[0].pageY;
+}, { passive: true });
+
+scroller.addEventListener('touchmove', (e) => {
+    const y = e.touches[0].pageY;
+    const diff = y - startY;
+    if (scroller.scrollTop === 0 && diff > 0) {
+        indicator.style.height = Math.min(diff * 0.4, 60) + 'px';
+        if (diff > 120) indicator.style.color = "var(--primary)";
+        else indicator.style.color = "var(--accent)";
+    }
+}, { passive: true });
+
+scroller.addEventListener('touchend', (e) => {
+    const diff = e.changedTouches[0].pageY - startY;
+    if (scroller.scrollTop === 0 && diff > 120) {
+        document.getElementById('ptr-text').innerText = "ATUALIZANDO...";
+        setTimeout(() => location.reload(), 800);
+    } else {
+        indicator.style.height = '0px';
+    }
+});
 
 window.onload = () => { 
   setupPWA();
@@ -1030,8 +1116,9 @@ window.onload = () => {
   if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
   }
-  // Dispara a verificação logo ao abrir
-  setTimeout(checkExpiringBills, 1500);
+  
+  // Inicia o ciclo de alertas recorrentes (10 em 10 segundos)
+  startRecurringAlerts();
 };
 </script>
 </body>
