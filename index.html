@@ -493,8 +493,8 @@ header {
       <div style="text-align: center; margin-top: 40px; color: var(--secondary);">
         <p style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Todos Direitos Reservados</p>
         <p style="font-size: 0.6rem; margin-bottom: 2px;">© 2026</p>
-        <a href="https://wa.me/5563992092699?text=Ol%C3%A1%20B.J.C%2C%20tenho%20d%C3%BAvidas%20sobre%20o%20app%20financeiro%20ou%20gostaria%20de%20fazer%20um%20or%C3%A7amento%20para%20um%20novo%20site." target="_blank" class="credits-btn">
-           B.J.C (Dúvidas,Suporte e Serviços)
+        <a href="https://wa.me/5563992092699?text=Ol%C3%A1%20Benedito%2C%20tenho%20d%C3%BAvidas%20sobre%20o%20app%20financeiro%20ou%20gostaria%20de%20fazer%20um%20or%C3%A7amento%20para%20um%20novo%20site." target="_blank" class="credits-btn">
+           B.J.C (Dúvidas e Suporte)
         </a>
       </div>
     </footer>
@@ -778,12 +778,14 @@ function checkExpiringBills() {
       const dayMatch = item.due.match(/\d+/);
       if (dayMatch) {
         const day = parseInt(dayMatch[0]);
+        // Garantir que a data de vencimento use o mês e ano atualmente exibidos
         const dueDate = new Date(curYear, curMonth, day);
         dueDate.setHours(0,0,0,0);
         
         const diffTime = dueDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
+        // Alerta entre hoje (0) e 2 dias de antecedência
         if (diffDays >= 0 && diffDays <= 2) {
           expiring.push({ ...item, diffDays });
         }
@@ -802,6 +804,7 @@ function checkExpiringBills() {
         <div style="font-weight:800;">${fmt(i.amount)}</div>
       </div>
     `).join('');
+    
     toggleModal('modal-alerts', true);
 
     if ("Notification" in window) {
@@ -810,8 +813,6 @@ function checkExpiringBills() {
           body: `Você tem ${expiring.length} conta(s) que vencem em breve. Abra o app para conferir.`,
           icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg=='
         });
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission();
       }
     }
   }
@@ -946,6 +947,7 @@ function saveExpense() {
   save(); 
   toggleModal('modal-add', false);
   showToast("Lançamento salvo!");
+  checkExpiringBills();
 }
 
 function editItem(id) {
@@ -999,6 +1001,7 @@ function confirmPayment() {
   save(); 
   toggleModal('modal-pay', false);
   showToast("Pagamento registrado!");
+  checkExpiringBills();
 }
 
 function openConfirmModal(id) { currentDeleteId = id; toggleModal('modal-confirm', true); }
@@ -1018,7 +1021,7 @@ document.getElementById('btn-confirm-delete').onclick = () => {
 };
 
 function switchTab(t) { currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-${t}`)); render(); }
-function changeMonth(s) { curMonth += s; if (curMonth > 11) { curMonth = 0; curYear++; } else if (curMonth < 0) { curMonth = 11; curYear--; } syncData(); render(); }
+function changeMonth(s) { curMonth += s; if (curMonth > 11) { curMonth = 0; curYear++; } else if (curMonth < 0) { curMonth = 11; curYear--; } syncData(); render(); checkExpiringBills(); }
 
 window.onload = () => { 
   setupPWA();
@@ -1027,7 +1030,8 @@ window.onload = () => {
   if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
   }
-  setTimeout(checkExpiringBills, 1000);
+  // Dispara a verificação logo ao abrir
+  setTimeout(checkExpiringBills, 1500);
 };
 </script>
 </body>
