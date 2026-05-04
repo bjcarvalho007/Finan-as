@@ -364,24 +364,27 @@ header {
   align-items: center;
 }
 
-/* Botão de Ajuda Flutuante */
+/* Botão de Ajuda Flutuante AJUSTADO */
 .help-fab {
   position: fixed;
   right: 20px;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  width: 50px;
-  height: 50px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  width: 44px; /* Ligeiramente menor */
+  height: 44px;
+  background: rgba(255, 255, 255, 0.1); /* Cor clara e transparente */
+  backdrop-filter: blur(4px); /* Desfoque para não obstruir */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--secondary);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  color: rgba(255, 255, 255, 0.4); /* Ícone discreto */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   z-index: 1000;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
+.help-fab:active { transform: scale(0.9); background: rgba(255, 255, 255, 0.2); }
 
 .tutorial-step {
   margin-bottom: 24px;
@@ -409,7 +412,7 @@ header {
 
 <!-- Botão de Ajuda -->
 <div class="help-fab" onclick="toggleModal('modal-tutorial', true)">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
 </div>
 
 <div class="scroll-container">
