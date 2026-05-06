@@ -561,7 +561,7 @@ header {
 
     <div class="tutorial-step">
       <h4>🔔 Alertas de Vencimento</h4>
-      <p>Fique tranquilo! O app irá te <span style="color: var(--warning); font-weight: 700;">alertar 1 dia antes</span> do vencimento de qualquer conta para garantir que você pague em dia.</p>
+      <p>Fique tranquilo! O app irá te <span style="color: var(--warning); font-weight: 700;">notificar de forma direta</span> sobre vencimentos para garantir que você não esqueça de pagar.</p>
     </div>
 
     <div class="tutorial-step">
@@ -697,7 +697,23 @@ const setupPWA = () => {
   const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
   document.querySelector('#pwa-manifest').setAttribute('href', URL.createObjectURL(blob));
   if ('serviceWorker' in navigator) {
-    const swCode = `self.addEventListener('install', e => e.waitUntil(self.skipWaiting())); self.addEventListener('activate', e => e.waitUntil(self.clients.claim())); self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => {})));`;
+    const swCode = `
+      self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
+      self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+      self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => {})));
+      
+      // Notificação nativa mesmo em background
+      self.addEventListener('push', function(event) {
+        const data = event.data.json();
+        const options = {
+            body: data.body,
+            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==',
+            badge: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48L3N2Zz4=',
+            vibrate: [100, 50, 100]
+        };
+        event.waitUntil(self.registration.showNotification(data.title, options));
+      });
+    `;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'}))).catch(() => {});
   }
 };
@@ -783,8 +799,9 @@ function saveIncome() {
 function startRecurringAlerts() {
     if (stopAllAlerts) return;
     if (alertSequenceInterval) clearInterval(alertSequenceInterval);
-    // Checa a cada 30 segundos para não ser invasivo
-    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 30000);
+    // Checa a cada 30 segundos (ou imediatamente ao abrir)
+    checkExpiringBills();
+    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 60000);
 }
 
 function stopAlertSequence() {
@@ -807,7 +824,6 @@ function goToPayFirstAlert() {
             const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
             dueDate.setHours(0,0,0,0);
             const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-            // Foco apenas em quem vence hoje (0) ou amanhã (1)
             return diff >= 0 && diff <= 1;
         }
         return false;
@@ -855,18 +871,22 @@ function checkExpiringBills() {
       </div>
     `).join('');
     
-    // Só abre o modal se não houver outro modal aberto no momento
+    // Tenta abrir o modal visual se não houver nada aberto
     const isAnyModalOpen = document.querySelector('.modal-overlay.open');
-    if (!isAnyModalOpen) {
-        toggleModal('modal-alerts', true);
-    }
+    if (!isAnyModalOpen) toggleModal('modal-alerts', true);
 
-    // 2. Notificação do Sistema
+    // 2. Notificação Direta do Google/Sistema (Nativa)
     if ("Notification" in window && Notification.permission === "granted") {
         expiring.forEach(item => {
-            new Notification("Aviso de Pagamento", { 
-                body: `A conta "${item.name}" (${fmt(item.amount)}) vence ${item.diffDays === 0 ? 'HOJE' : 'amanhã'}.`,
-                icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==' 
+            const tag = `vence-${item.id}`; // Evita duplicados
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Conta Vencendo!", {
+                    body: `${item.name} (${fmt(item.amount)}) vence ${item.diffDays === 0 ? 'HOJE' : 'amanhã'}. Clique para abrir o app.`,
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==',
+                    tag: tag,
+                    requireInteraction: true, // Mantém a notificação até o usuário agir
+                    vibrate: [200, 100, 200]
+                });
             });
         });
     }
@@ -1083,11 +1103,17 @@ window.onload = () => {
     setupPWA(); 
     load(); 
     render(); 
-    if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
+    
+    // Solicita permissão de notificação nativa ao entrar
+    if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                startRecurringAlerts();
+            }
+        });
+    } else {
+        startRecurringAlerts();
     }
-    // Inicia a verificação de contas expirando
-    startRecurringAlerts(); 
 };
 </script>
 </body>
