@@ -42,7 +42,6 @@ html, body {
   width: 100%;
   overflow: hidden; 
   background-color: var(--bg);
-  /* Retirado position fixed para permitir detecção de touch no refresh */
 }
 
 * { 
@@ -118,12 +117,20 @@ header {
   padding: 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  position: relative;
 }
 
 .card-full { 
   grid-column: 1 / -1; 
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-left: 4px solid var(--border);
+}
+
+/* Adição para o card de Sobra */
+.card-sobra {
+  background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+  border: 1px solid var(--accent);
+  cursor: pointer;
 }
 
 .card-label { 
@@ -145,6 +152,17 @@ header {
   font-size: 1.25rem; 
   font-weight: 700; 
   font-family: 'JetBrains Mono', monospace;
+}
+
+.btn-edit-inline {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--secondary);
+  opacity: 0.5;
+  cursor: pointer;
 }
 
 .nav-bar {
@@ -293,7 +311,6 @@ header {
   outline: none;
 }
 
-/* NOVO SELETOR DE CATEGORIA PROFISSIONAL */
 .cat-selector-trigger {
   width: 100%;
   padding: 16px;
@@ -314,7 +331,7 @@ header {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 10px;
-  display: none; /* Escondido por padrão */
+  display: none; 
   animation: fadeIn 0.3s ease;
 }
 .cat-grid.show { display: grid; }
@@ -365,7 +382,6 @@ header {
 }
 #toast.show { transform: translateX(-50%) translateY(20px); }
 
-/* Estilo para lista de alertas */
 .alert-item {
   padding: 12px;
   border-radius: 12px;
@@ -377,21 +393,20 @@ header {
   align-items: center;
 }
 
-/* Botão de Ajuda Flutuante AJUSTADO */
 .help-fab {
   position: fixed;
   right: 20px;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  width: 44px; /* Ligeiramente menor */
+  width: 44px;
   height: 44px;
-  background: rgba(255, 255, 255, 0.1); /* Cor clara e transparente */
-  backdrop-filter: blur(4px); /* Desfoque para não obstruir */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.4); /* Ícone discreto */
+  color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   z-index: 1000;
   cursor: pointer;
@@ -471,6 +486,17 @@ header {
         <div class="card-label">Estimativa Total Devedora</div>
         <div class="card-value" id="res-debt-bruta">R$ 0,00</div>
       </div>
+      
+      <!-- NOVA PARTE: RENDA E SOBRA -->
+      <div class="card card-full card-sobra" onclick="toggleModal('modal-income', true)">
+        <button class="btn-edit-inline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        </button>
+        <div class="card-label" style="color: rgba(255,255,255,0.7)">Sobra Estimada (No Mês)</div>
+        <div class="card-value" id="res-leftover" style="color: var(--accent)">R$ 0,00</div>
+        <div class="card-legend" id="res-income-label" style="color: rgba(255,255,255,0.5)">SOBRE RENDA DE R$ 0,00</div>
+      </div>
+
       <div class="card">
         <div class="card-label">A pagar (Mês)</div>
         <div class="card-value" id="res-pending-month">R$ 0,00</div>
@@ -511,7 +537,7 @@ header {
       <div style="text-align: center; margin-top: 40px; color: var(--secondary);">
         <p style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Gerenciamento Seguro</p>
         <p style="font-size: 0.6rem; margin-bottom: 2px;">© 2026</p>
-        <a href="https://wa.me/5563992092699?text=Ol%C3%A1%20Benedito%2C%20tenho%20d%C3%BAvidas%20sobre%20o%20app%20financeiro%20ou%20gostaria%20de%20fazer%20um%20or%C3%A7amento%20para%20um%20novo%20site." target="_blank" class="credits-btn">
+        <a href="https://wa.me/5563992092699?text=Ol%C3%A1%20Benedito%2C%20tenho%20d%C3%BAvidas%20sobre%20o%20app%20financeiro%20ou%20gostaria%20de%20fazer%20um%20or%C3%A7amento%20para%20un%20novo%20site." target="_blank" class="credits-btn">
            B.J.C (Dúvidas e Suporte)
         </a>
       </div>
@@ -525,40 +551,44 @@ header {
     <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.4rem;">Como Funciona? 🚀</div>
     
     <div class="tutorial-step">
+      <h4>💰 Renda e Sobra</h4>
+      <p>Clique no card verde no topo para definir sua <span style="color: var(--accent); font-weight: 700;">renda mensal</span>. O app calculará automaticamente quanto sobrará após subtrair suas contas do mês.</p>
+    </div>
+
+    <div class="tutorial-step">
       <h4>✏️ Edição de Gastos</h4>
       <p>Você pode <span style="color: var(--accent); font-weight: 700;">editar</span> qualquer gasto a qualquer momento. Basta clicar na descrição do item na lista para abrir o formulário de edição.</p>
     </div>
 
     <div class="tutorial-step">
-      <h4>🔔 Alertas de Dívida</h4>
-      <p>Fique tranquilo! O app irá te <span style="color: var(--warning); font-weight: 700;">alertar 2 dias antes</span> do vencimento de qualquer conta para garantir que você pague em dia.</p>
+      <h4>🔔 Alertas de Vencimento</h4>
+      <p>Fique tranquilo! O app irá te <span style="color: var(--warning); font-weight: 700;">alertar 1 dia antes</span> do vencimento de qualquer conta para garantir que você pague em dia.</p>
     </div>
 
     <div class="tutorial-step">
       <h4>📌 Gastos Fixos</h4>
-      <p>Contas que se repetem todo mês (Ex: Aluguel). Quando você cria aqui, o app gera automaticamente para todos os meses futuros.</p>
-    </div>
-
-    <div class="tutorial-step">
-      <h4>📊 Gastos Variáveis</h4>
-      <p>Gastos pontuais que ocorrem apenas no mês selecionado (Ex: Uma compra específica de mercado ou farmácia).</p>
-    </div>
-
-    <div class="tutorial-step">
-      <h4>💳 Parcelamentos</h4>
-      <p>Contas com valor decrescente. Ao pagar, o valor total da dívida diminui até o item ser removido automaticamente.</p>
-    </div>
-
-    <div class="tutorial-step">
-      <h4>📅 Navegação Mensal</h4>
-      <p>Use as setas para planejar meses futuros ou conferir meses passados. O app avisa se houver pendências em meses anteriores!</p>
+      <p>Contas que se repetem todo mês. Quando você cria aqui, o app gera automaticamente para todos os meses futuros.</p>
     </div>
 
     <button class="btn-primary" onclick="toggleModal('modal-tutorial', false)">ENTENDI, VAMOS LÁ!</button>
   </div>
 </div>
 
-<!-- Modais -->
+<!-- Modal de Renda -->
+<div class="modal-overlay" id="modal-income">
+  <div class="modal">
+    <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem;">Renda do Mês</div>
+    <p style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 20px;">Informe quanto você vai receber este mês para calcularmos a sua sobra.</p>
+    <div class="input-group">
+      <label>Valor da Renda (R$)</label>
+      <input type="text" id="in-income-val" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
+    </div>
+    <button class="btn-primary" onclick="saveIncome()">DEFINIR RENDA</button>
+    <button class="btn-ghost" onclick="toggleModal('modal-income', false)">CANCELAR</button>
+  </div>
+</div>
+
+<!-- Modais de Gasto -->
 <div class="modal-overlay" id="modal-add">
   <div class="modal">
     <div class="modal-header" id="modal-title" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem;">Novo Registro</div>
@@ -591,7 +621,7 @@ header {
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
       <div class="input-group">
         <label>Valor (R$)</label>
-        <input type="number" id="in-amount" step="0.01">
+        <input type="text" id="in-amount" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
       </div>
       <div class="input-group">
         <label>Data Vencimento</label>
@@ -610,7 +640,7 @@ header {
     <div id="pay-details" style="margin-bottom: 24px; padding: 18px; background: var(--bg); border-radius: 16px; font-size: 0.9rem; color: var(--secondary); border: 1px solid var(--border);"></div>
     <div class="input-group">
       <label>Confirmar Valor (R$)</label>
-      <input type="number" id="pay-value" step="0.01">
+      <input type="text" id="pay-value" inputmode="numeric" oninput="maskMoney(this)">
     </div>
     <button class="btn-primary" onclick="confirmPayment()">BAIXAR DÉBITO</button>
     <button class="btn-ghost" onclick="toggleModal('modal-pay', false)">FECHAR</button>
@@ -628,15 +658,12 @@ header {
   </div>
 </div>
 
-<!-- Modal de Alertas de Vencimento (MODIFICADO COM CONTROLE DE REPETIÇÃO) -->
 <div class="modal-overlay" id="modal-alerts">
   <div class="modal">
     <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--danger);">
       <span>⚠️</span> CONTAS VENCENDO
     </div>
-    <div id="alert-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
-      <!-- Itens de alerta inseridos via JS -->
-    </div>
+    <div id="alert-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;"></div>
     <button class="btn-primary" onclick="goToPayFirstAlert()">IR PARA PAGAR</button>
     <button class="btn-ghost" style="color:var(--danger)" onclick="stopAlertSequence()">PARAR ESTES AVISOS</button>
     <button class="btn-ghost" onclick="toggleModal('modal-alerts', false)">LEMBRAR EM 10s</button>
@@ -644,68 +671,41 @@ header {
 </div>
 
 <script>
-// --- VARIÁVEIS DE CONTROLE PARA O ALERTA RECORRENTE ---
 let alertSequenceInterval = null;
 let stopAllAlerts = false;
 
+// FUNÇÃO DE MÁSCARA MONETÁRIA
+function maskMoney(input) {
+  let value = input.value.replace(/\D/g, "");
+  if (value === "") {
+    input.value = "";
+    return;
+  }
+  value = (parseInt(value) / 100).toFixed(2);
+  input.value = fmt(parseFloat(value));
+}
+
+// Converte String Formatada (R$ 1.234,56) para Float (1234.56)
+function parseMoney(str) {
+  if (!str) return 0;
+  // Remove R$, pontos de milhar e troca vírgula por ponto
+  let cleanValue = str.replace(/[^\d,]/g, "").replace(",", ".");
+  return parseFloat(cleanValue) || 0;
+}
+
 const setupPWA = () => {
   const iconData = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==";
-  
-  const manifest = {
-    "name": "Meu Controle Financeiro",
-    "short_name": "Finanças",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#020617",
-    "theme_color": "#020617",
-    "icons": [
-      {
-        "src": iconData,
-        "sizes": "512x512",
-        "type": "image/svg+xml",
-        "purpose": "any maskable"
-      }
-    ]
-  };
-  
-  const stringManifest = JSON.stringify(manifest);
-  const blob = new Blob([stringManifest], {type: 'application/json'});
-  const manifestURL = URL.createObjectURL(blob);
-  document.querySelector('#pwa-manifest').setAttribute('href', manifestURL);
-
+  const manifest = { "name": "Meu Controle Financeiro", "short_name": "Finanças", "start_url": ".", "display": "standalone", "background_color": "#020617", "theme_color": "#020617", "icons": [{ "src": iconData, "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }] };
+  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+  document.querySelector('#pwa-manifest').setAttribute('href', URL.createObjectURL(blob));
   if ('serviceWorker' in navigator) {
-    const swCode = `
-      self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-      self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-      self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => {})));
-    `;
-    const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    const swURL = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swURL).catch(() => {});
+    const swCode = `self.addEventListener('install', e => e.waitUntil(self.skipWaiting())); self.addEventListener('activate', e => e.waitUntil(self.clients.claim())); self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => {})));`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'}))).catch(() => {});
   }
 };
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-
-const CATEGORIES = {
-  moradia: { icon: '🏠', label: 'Moradia' },
-  mercado: { icon: '🛒', label: 'Mercado' },
-  transporte: { icon: '🚗', label: 'Transporte' },
-  saude: { icon: '🏥', label: 'Saúde' },
-  educacao: { icon: '📚', label: 'Educação' },
-  estetica: { icon: '✨', label: 'Beleza' },
-  lazer: { icon: '🎮', label: 'Lazer' },
-  restaurante: { icon: '🍽️', label: 'Comida' },
-  assinaturas: { icon: '💳', label: 'Stream' },
-  comunicacao: { icon: '🌐', label: 'Internet' },
-  pet: { icon: '🐾', label: 'Pets' },
-  vestuario: { icon: '👕', label: 'Roupas' },
-  casa: { icon: '🛋️', label: 'Casa' },
-  investimento: { icon: '📈', label: 'Invest.' },
-  imposto: { icon: '📄', label: 'Taxas' },
-  cartao: { icon: '💳', label: 'Cartão' },
-  outros: { icon: '📦', label: 'Outros' }
-};
+const CATEGORIES = { moradia: { icon: '🏠', label: 'Moradia' }, mercado: { icon: '🛒', label: 'Mercado' }, transporte: { icon: '🚗', label: 'Transporte' }, saude: { icon: '🏥', label: 'Saúde' }, educacao: { icon: '📚', label: 'Educação' }, estetica: { icon: '✨', label: 'Beleza' }, lazer: { icon: '🎮', label: 'Lazer' }, restaurante: { icon: '🍽️', label: 'Comida' }, assinaturas: { icon: '💳', label: 'Stream' }, comunicacao: { icon: '🌐', label: 'Internet' }, pet: { icon: '🐾', label: 'Pets' }, vestuario: { icon: '👕', label: 'Roupas' }, casa: { icon: '🛋️', label: 'Casa' }, investimento: { icon: '📈', label: 'Invest.' }, imposto: { icon: '📄', label: 'Taxas' }, cartao: { icon: '💳', label: 'Cartão' }, outros: { icon: '📦', label: 'Outros' } };
 
 let curDate = new Date();
 let curMonth = curDate.getMonth();
@@ -730,15 +730,8 @@ function load() {
   if (saved) state = JSON.parse(saved);
   syncData();
   renderCatGrid();
-  
-  // Lógica de tutorial apenas uma vez
   const tutorialShown = localStorage.getItem('bjc_tutorial_shown');
-  if (!tutorialShown) {
-    setTimeout(() => {
-      toggleModal('modal-tutorial', true);
-      localStorage.setItem('bjc_tutorial_shown', 'true');
-    }, 1200);
-  }
+  if (!tutorialShown) { setTimeout(() => { toggleModal('modal-tutorial', true); localStorage.setItem('bjc_tutorial_shown', 'true'); }, 1200); }
 }
 
 function save() {
@@ -748,7 +741,8 @@ function save() {
 
 function syncData() {
   const key = getDbKey();
-  if (!state.months[key]) state.months[key] = { fixos: [], variaveis: [] };
+  if (!state.months[key]) state.months[key] = { fixos: [], variaveis: [], income: 0 };
+  if (state.months[key].income === undefined) state.months[key].income = 0;
   
   state.fixosMaster.forEach(master => {
     const exists = state.months[key].fixos.find(f => f.masterId === master.id);
@@ -758,7 +752,6 @@ function syncData() {
   });
 }
 
-// LOGICA CATEGORIAS GRID
 function renderCatGrid() {
   const grid = document.getElementById('cat-grid');
   grid.innerHTML = Object.entries(CATEGORIES).map(([key, data]) => `
@@ -769,35 +762,30 @@ function renderCatGrid() {
   `).join('');
 }
 
-function toggleCatGrid() {
-  const grid = document.getElementById('cat-grid');
-  grid.classList.toggle('show');
-}
+function toggleCatGrid() { document.getElementById('cat-grid').classList.toggle('show'); }
 
 function selectCategory(key) {
   const data = CATEGORIES[key];
   document.getElementById('in-cat').value = key;
   document.getElementById('selected-cat-display').innerHTML = `${data.icon} ${data.label}`;
-  
   document.querySelectorAll('.cat-option').forEach(opt => opt.classList.remove('selected'));
   document.getElementById(`cat-opt-${key}`).classList.add('selected');
-  
-  setTimeout(() => {
-    document.getElementById('cat-grid').classList.remove('show');
-  }, 200);
+  setTimeout(() => { document.getElementById('cat-grid').classList.remove('show'); }, 200);
 }
 
-// --- FUNÇÕES DO ALERTA RECORRENTE (MODIFICADO) ---
+// LÓGICA DE RENDA
+function saveIncome() {
+  const val = parseMoney(document.getElementById('in-income-val').value);
+  state.months[getDbKey()].income = val;
+  save();
+  toggleModal('modal-income', false);
+  showToast("Renda atualizada!");
+}
+
 function startRecurringAlerts() {
     if (stopAllAlerts) return;
-    
     if (alertSequenceInterval) clearInterval(alertSequenceInterval);
-    
-    alertSequenceInterval = setInterval(() => {
-        if (!stopAllAlerts) {
-            checkExpiringBills();
-        }
-    }, 10000); // 10 Segundos
+    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 10000);
 }
 
 function stopAlertSequence() {
@@ -809,7 +797,6 @@ function stopAlertSequence() {
 
 function goToPayFirstAlert() {
     toggleModal('modal-alerts', false);
-    // Tenta encontrar o ID do primeiro item que disparou o alerta para abrir o modal de pagamento
     const key = getDbKey();
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -820,19 +807,18 @@ function goToPayFirstAlert() {
         if (paid < i.amount && dayMatch) {
             const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
             const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-            return diff >= 0 && diff <= 2;
+            // Foca agora em 1 dia antes
+            return diff >= 0 && diff <= 1;
         }
         return false;
     });
     if (item) openPayModal(item.id);
 }
 
-// Lógica de Notificação e Verificação de Vencimento
 function checkExpiringBills() {
   const key = getDbKey();
   const today = new Date();
   today.setHours(0,0,0,0);
-  
   const expiring = [];
   const allCurrent = [...state.months[key].fixos, ...state.months[key].variaveis];
   
@@ -841,38 +827,36 @@ function checkExpiringBills() {
     if (paid < item.amount) {
       const dayMatch = item.due.match(/\d+/);
       if (dayMatch) {
-        const day = parseInt(dayMatch[0]);
-        const dueDate = new Date(curYear, curMonth, day);
+        const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
         dueDate.setHours(0,0,0,0);
+        const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
         
-        const diffTime = dueDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays >= 0 && diffDays <= 2) {
-          expiring.push({ ...item, diffDays });
-        }
+        // MUDADO PARA 1 DIA ANTES DO VENCIMENTO (diffDays <= 1)
+        if (diffDays >= 0 && diffDays <= 1) expiring.push({ ...item, diffDays });
       }
     }
   });
 
   if (expiring.length > 0) {
-    const list = document.getElementById('alert-list');
-    list.innerHTML = expiring.map(i => `
+    // 1. Mostrar Alerta no App (Modal)
+    document.getElementById('alert-list').innerHTML = expiring.map(i => `
       <div class="alert-item">
         <div>
-          <div style="font-weight:700; color:white;">${i.name}</div>
-          <div style="font-size:0.7rem; color:var(--secondary);">Vence em ${i.diffDays === 0 ? 'hoje' : i.diffDays + ' dias'}</div>
+           <div style="font-weight:700; color:white;">${i.name}</div>
+           <div style="font-size:0.7rem; color:var(--secondary);">Vence ${i.diffDays === 0 ? 'hoje' : 'amanhã'}</div>
         </div>
         <div style="font-weight:800;">${fmt(i.amount)}</div>
       </div>
     `).join('');
-    
     toggleModal('modal-alerts', true);
 
+    // 2. Mostrar Notificação do Sistema (Estilo WhatsApp/Aparelho)
     if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("Contas Vencendo!", {
-          body: `Você tem ${expiring.length} conta(s) vencendo.`,
-          icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg=='
+        expiring.forEach(item => {
+            new Notification("Alerta de Vencimento!", { 
+                body: `Sua conta "${item.name}" no valor de ${fmt(item.amount)} vence ${item.diffDays === 0 ? 'hoje' : 'amanhã'}. Pague para evitar juros!`,
+                icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==' 
+            });
         });
     }
   }
@@ -883,8 +867,7 @@ function getPreviousDebt() {
   const currentKey = getDbKey();
   Object.keys(state.months).forEach(key => {
     if (key < currentKey) {
-      const mData = state.months[key];
-      const all = [...mData.fixos, ...mData.variaveis];
+      const all = [...state.months[key].fixos, ...state.months[key].variaveis];
       const total = all.reduce((s, i) => s + i.amount, 0);
       const paid = all.reduce((s, i) => s + (i.paid_amount || 0), 0);
       totalDebt += Math.max(0, total - paid);
@@ -896,6 +879,7 @@ function getPreviousDebt() {
 function render() {
   const key = getDbKey();
   const monthData = state.months[key];
+  const income = monthData.income || 0;
   const prevDebt = getPreviousDebt();
   const parcelasTotalPendente = state.parcelamentos.reduce((s, i) => s + i.amount, 0);
   
@@ -905,9 +889,11 @@ function render() {
   
   const totalWithPrev = totalMonthBruto + prevDebt;
   const paidMonth = allCurrent.reduce((s, i) => s + (i.paid_amount || 0), 0);
-  
   const pendingMonth = Math.max(0, totalWithPrev - paidMonth);
   const bruteTotal = pendingMonth + parcelasTotalPendente;
+
+  // Cálculo da Sobra: Renda - (Fixos + Variáveis do mês)
+  const leftover = income - totalMonthBruto;
 
   document.getElementById('display-date').textContent = `${MONTHS[curMonth].toUpperCase()} ${curYear}`;
   document.getElementById('res-debt-bruta').textContent = fmt(bruteTotal);
@@ -917,14 +903,17 @@ function render() {
   document.getElementById('res-pending-installments').textContent = fmt(parcelasTotalPendente);
   document.getElementById('prev-debt-indicator').style.display = prevDebt > 0 ? 'block' : 'none';
 
+  // Atualiza exibição da sobra
+  document.getElementById('res-leftover').textContent = fmt(leftover);
+  document.getElementById('res-income-label').textContent = `SOBRE RENDA DE ${fmt(income)}`;
+  document.getElementById('in-income-val').value = income > 0 ? fmt(income) : '';
+
   let list = (currentTab === 'parcelas') ? state.parcelamentos : monthData[currentTab];
   const container = document.getElementById('expense-list');
-
   if (list.length === 0) {
     container.innerHTML = `<div style="text-align:center; padding:80px 20px; color:var(--secondary); font-size:0.85rem; opacity:0.4;">SEM REGISTROS NESTA CATEGORIA</div>`;
     return;
   }
-
   container.innerHTML = list.map(item => {
     const cat = CATEGORIES[item.cat] || CATEGORIES.outros;
     const pAmount = item.paid_amount || 0;
@@ -941,9 +930,7 @@ function render() {
         <div class="item-right">
           <div class="item-price">${fmt(item.amount)}</div>
           <div style="display:flex; gap:8px; margin-top:6px; justify-content:flex-end;">
-            <button class="btn-pay ${isPaid ? 'paid' : ''}" onclick="openPayModal(${item.id})">
-              ${currentTab === 'parcelas' ? 'PAGAR' : (isPaid ? 'CONCLUÍDO' : 'PAGAR')}
-            </button>
+            <button class="btn-pay ${isPaid ? 'paid' : ''}" onclick="openPayModal(${item.id})">${currentTab === 'parcelas' ? 'PAGAR' : (isPaid ? 'CONCLUÍDO' : 'PAGAR')}</button>
             <button class="btn-icon" onclick="openConfirmModal(${item.id})">🗑️</button>
           </div>
         </div>
@@ -952,10 +939,7 @@ function render() {
   }).join('');
 }
 
-function toggleModal(id, open) { 
-  document.getElementById(id).classList.toggle('open', open); 
-  if(!open) document.getElementById('cat-grid').classList.remove('show');
-}
+function toggleModal(id, open) { document.getElementById(id).classList.toggle('open', open); if(!open) document.getElementById('cat-grid').classList.remove('show'); }
 
 function openAddModal() {
   document.getElementById('edit-id').value = '';
@@ -971,13 +955,11 @@ function openAddModal() {
 function saveExpense() {
   const idStr = document.getElementById('edit-id').value;
   const name = document.getElementById('in-name').value;
-  const amount = parseFloat(document.getElementById('in-amount').value);
+  const amount = parseMoney(document.getElementById('in-amount').value);
   const cat = document.getElementById('in-cat').value;
   const due = document.getElementById('in-due').value;
   const type = document.getElementById('in-type').value;
-
-  if (!name || isNaN(amount)) return;
-
+  if (!name || amount === 0) return;
   if (idStr) {
     const id = parseFloat(idStr);
     if (type === 'parcelas') {
@@ -1011,23 +993,14 @@ function saveExpense() {
 function editItem(id) {
   let item, type;
   const key = getDbKey();
-  if (state.parcelamentos.find(i => i.id === id)) { 
-    item = state.parcelamentos.find(i => i.id === id); 
-    type = 'parcelas'; 
-  } else if (state.months[key].fixos.find(i => i.id === id)) { 
-    item = state.months[key].fixos.find(i => i.id === id); 
-    type = 'fixos'; 
-  } else { 
-    item = state.months[key].variaveis.find(i => i.id === id); 
-    type = 'variaveis'; 
-  }
-  
+  if (state.parcelamentos.find(i => i.id === id)) { item = state.parcelamentos.find(i => i.id === id); type = 'parcelas'; }
+  else if (state.months[key].fixos.find(i => i.id === id)) { item = state.months[key].fixos.find(i => i.id === id); type = 'fixos'; }
+  else { item = state.months[key].variaveis.find(i => i.id === id); type = 'variaveis'; }
   if (!item) return;
-
   document.getElementById('edit-id').value = id;
   document.getElementById('modal-title').textContent = 'Editar Registro';
   document.getElementById('in-name').value = item.name;
-  document.getElementById('in-amount').value = item.amount;
+  document.getElementById('in-amount').value = fmt(item.amount);
   selectCategory(item.cat);
   document.getElementById('in-due').value = item.due || '';
   document.getElementById('in-type').value = type;
@@ -1042,13 +1015,13 @@ function openPayModal(id) {
   currentPayId = id;
   const rem = item.amount - (item.paid_amount || 0);
   document.getElementById('pay-details').innerHTML = `<strong style="color:white;font-size:1.1rem">${item.name}</strong><br>VALOR EM ABERTO: ${fmt(rem)}`;
-  document.getElementById('pay-value').value = rem.toFixed(2);
+  document.getElementById('pay-value').value = fmt(rem);
   toggleModal('modal-pay', true);
 }
 
 function confirmPayment() {
-  const val = parseFloat(document.getElementById('pay-value').value);
-  if (isNaN(val) || val <= 0) return;
+  const val = parseMoney(document.getElementById('pay-value').value);
+  if (val <= 0) return;
   if (currentTab === 'parcelas') {
     const item = state.parcelamentos.find(i => i.id === currentPayId);
     if (item) { item.amount -= val; if (item.amount <= 0) state.parcelamentos = state.parcelamentos.filter(i => i.id !== currentPayId); }
@@ -1080,45 +1053,32 @@ document.getElementById('btn-confirm-delete').onclick = () => {
 function switchTab(t) { currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-${t}`)); render(); }
 function changeMonth(s) { curMonth += s; if (curMonth > 11) { curMonth = 0; curYear++; } else if (curMonth < 0) { curMonth = 11; curYear--; } syncData(); render(); }
 
-// --- LOGICA DE PULL TO REFRESH ---
 let startY = 0;
 const scroller = document.getElementById('main-scroll');
 const indicator = document.getElementById('ptr-indicator');
-
-scroller.addEventListener('touchstart', (e) => {
-    if (scroller.scrollTop === 0) startY = e.touches[0].pageY;
-}, { passive: true });
-
+scroller.addEventListener('touchstart', (e) => { if (scroller.scrollTop === 0) startY = e.touches[0].pageY; }, { passive: true });
 scroller.addEventListener('touchmove', (e) => {
     const y = e.touches[0].pageY;
     const diff = y - startY;
     if (scroller.scrollTop === 0 && diff > 0) {
         indicator.style.height = Math.min(diff * 0.4, 60) + 'px';
-        if (diff > 120) indicator.style.color = "var(--primary)";
-        else indicator.style.color = "var(--accent)";
+        indicator.style.color = diff > 120 ? "var(--primary)" : "var(--accent)";
     }
 }, { passive: true });
-
 scroller.addEventListener('touchend', (e) => {
     const diff = e.changedTouches[0].pageY - startY;
-    if (scroller.scrollTop === 0 && diff > 120) {
-        document.getElementById('ptr-text').innerText = "ATUALIZANDO...";
-        setTimeout(() => location.reload(), 800);
-    } else {
-        indicator.style.height = '0px';
-    }
+    if (scroller.scrollTop === 0 && diff > 120) { document.getElementById('ptr-text').innerText = "ATUALIZANDO..."; setTimeout(() => location.reload(), 800); } else { indicator.style.height = '0px'; }
 });
 
 window.onload = () => { 
-  setupPWA();
-  load(); 
-  render(); 
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
-  
-  // Inicia o ciclo de alertas recorrentes (10 em 10 segundos)
-  startRecurringAlerts();
+    setupPWA(); 
+    load(); 
+    render(); 
+    // PEDIR PERMISSÃO PARA NOTIFICAÇÕES NATIVAS
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+    startRecurringAlerts(); 
 };
 </script>
 </body>
