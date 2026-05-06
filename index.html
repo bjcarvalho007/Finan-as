@@ -687,7 +687,7 @@ function maskMoney(input) {
 // Converte String Formatada (R$ 1.234,56) para Float (1234.56)
 function parseMoney(str) {
   if (!str) return 0;
-  let cleanValue = str.replace(/[^\d,]/g, "").replace(",", ".");
+  let cleanValue = str.toString().replace(/[^\d,]/g, "").replace(",", ".");
   return parseFloat(cleanValue) || 0;
 }
 
@@ -701,18 +701,6 @@ const setupPWA = () => {
       self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
       self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
       self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => {})));
-      
-      // Notificação nativa mesmo em background
-      self.addEventListener('push', function(event) {
-        const data = event.data.json();
-        const options = {
-            body: data.body,
-            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==',
-            badge: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48L3N2Zz4=',
-            vibrate: [100, 50, 100]
-        };
-        event.waitUntil(self.registration.showNotification(data.title, options));
-      });
     `;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'}))).catch(() => {});
   }
@@ -783,7 +771,8 @@ function selectCategory(key) {
   document.getElementById('in-cat').value = key;
   document.getElementById('selected-cat-display').innerHTML = `${data.icon} ${data.label}`;
   document.querySelectorAll('.cat-option').forEach(opt => opt.classList.remove('selected'));
-  document.getElementById(`cat-opt-${key}`).classList.add('selected');
+  const target = document.getElementById(`cat-opt-${key}`);
+  if(target) target.classList.add('selected');
   setTimeout(() => { document.getElementById('cat-grid').classList.remove('show'); }, 200);
 }
 
@@ -798,10 +787,9 @@ function saveIncome() {
 
 function startRecurringAlerts() {
     if (stopAllAlerts) return;
-    if (alertSequenceInterval) clearInterval(alertSequenceInterval);
-    // Checa a cada 30 segundos (ou imediatamente ao abrir)
     checkExpiringBills();
-    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 60000);
+    // Verifica a cada 2 minutos
+    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 120000);
 }
 
 function stopAlertSequence() {
@@ -819,7 +807,7 @@ function goToPayFirstAlert() {
     const all = [...state.months[key].fixos, ...state.months[key].variaveis];
     const item = all.find(i => {
         const paid = i.paid_amount || 0;
-        const dayMatch = i.due.match(/\d+/);
+        const dayMatch = i.due ? i.due.match(/\d+/) : null;
         if (paid < i.amount && dayMatch) {
             const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
             dueDate.setHours(0,0,0,0);
@@ -840,12 +828,15 @@ function checkExpiringBills() {
   const today = new Date();
   today.setHours(0,0,0,0);
   const expiring = [];
+  
+  if (!state.months[key]) return;
+  
   const allCurrent = [...state.months[key].fixos, ...state.months[key].variaveis];
   
   allCurrent.forEach(item => {
     const paid = item.paid_amount || 0;
     if (paid < item.amount) {
-      const dayMatch = item.due.match(/\d+/);
+      const dayMatch = item.due ? item.due.match(/\d+/) : null;
       if (dayMatch) {
         const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
         dueDate.setHours(0,0,0,0);
@@ -860,7 +851,7 @@ function checkExpiringBills() {
   });
 
   if (expiring.length > 0) {
-    // 1. Mostrar Alerta no App (Modal)
+    // Renderiza lista no modal
     document.getElementById('alert-list').innerHTML = expiring.map(i => `
       <div class="alert-item">
         <div>
@@ -871,21 +862,21 @@ function checkExpiringBills() {
       </div>
     `).join('');
     
-    // Tenta abrir o modal visual se não houver nada aberto
+    // Abre o modal visual se não houver nada aberto e não estiver silenciado
     const isAnyModalOpen = document.querySelector('.modal-overlay.open');
-    if (!isAnyModalOpen) toggleModal('modal-alerts', true);
+    if (!isAnyModalOpen && !stopAllAlerts) {
+        toggleModal('modal-alerts', true);
+    }
 
-    // 2. Notificação Direta do Google/Sistema (Nativa)
+    // Notificação Nativa (Se permitido)
     if ("Notification" in window && Notification.permission === "granted") {
         expiring.forEach(item => {
-            const tag = `vence-${item.id}`; // Evita duplicados
+            const tag = `vence-${item.id}-${curMonth}`;
             navigator.serviceWorker.ready.then(registration => {
                 registration.showNotification("Conta Vencendo!", {
-                    body: `${item.name} (${fmt(item.amount)}) vence ${item.diffDays === 0 ? 'HOJE' : 'amanhã'}. Clique para abrir o app.`,
-                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==',
+                    body: `${item.name} (${fmt(item.amount)}) vence ${item.diffDays === 0 ? 'HOJE' : 'amanhã'}.`,
                     tag: tag,
-                    requireInteraction: true, // Mantém a notificação até o usuário agir
-                    vibrate: [200, 100, 200]
+                    requireInteraction: false
                 });
             });
         });
@@ -1091,7 +1082,6 @@ scroller.addEventListener('touchmove', (e) => {
     const diff = y - startY;
     if (scroller.scrollTop === 0 && diff > 0) {
         indicator.style.height = Math.min(diff * 0.4, 60) + 'px';
-        indicator.style.color = diff > 120 ? "var(--primary)" : "var(--accent)";
     }
 }, { passive: true });
 scroller.addEventListener('touchend', (e) => {
@@ -1104,12 +1094,10 @@ window.onload = () => {
     load(); 
     render(); 
     
-    // Solicita permissão de notificação nativa ao entrar
+    // Inicia verificador de alertas
     if ("Notification" in window) {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                startRecurringAlerts();
-            }
+        Notification.requestPermission().then(() => {
+            startRecurringAlerts();
         });
     } else {
         startRecurringAlerts();
