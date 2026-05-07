@@ -5,15 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Meu Controle Financeiro</title>
 
+<!-- CONFIGURAÇÕES DE APP NATIVO (PWA) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#020617">
 
+<!-- Ícones para Android e iOS (SVG do Logo) -->
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDE1TDIwIDI4djIyYzAgMTguNSAxMi44IDM1LjggMzAgNDAgMTcuMi00LjIgMzAtMjEuNSAzMC00MFYyOEw1MCAxNXoiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB5PSI2NSIgeD0iNTAiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4kPC90ZXh0Pjwvc3ZnPg==">
 
+<!-- MANIFEST JSON DINÂMICO -->
 <link rel="manifest" id="pwa-manifest">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,6 +36,7 @@
   --radius: 12px;
 }
 
+/* COMPORTAMENTO DE APP: AJUSTADO PARA PULL-TO-REFRESH */
 html, body {
   height: 100%;
   width: 100%;
@@ -57,6 +61,7 @@ body {
   flex-direction: column;
 }
 
+/* Indicador de Refresh */
 #ptr-indicator {
   height: 0;
   overflow: hidden;
@@ -119,6 +124,7 @@ header {
   border-left: 4px solid var(--border);
 }
 
+/* Adição para o card de Sobra */
 .card-sobra {
   background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
   border: 1px solid var(--accent);
@@ -261,6 +267,7 @@ header {
 
 .btn-icon { background: transparent; border: none; color: var(--secondary); padding: 5px; }
 
+/* Modal Estilo App */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -406,6 +413,20 @@ header {
 }
 .help-fab:active { transform: scale(0.9); background: rgba(255, 255, 255, 0.2); }
 
+.tutorial-step {
+  margin-bottom: 24px;
+}
+.tutorial-step h4 {
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.tutorial-step p {
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
 .credits-btn {
   display: inline-block;
   text-decoration: none;
@@ -433,10 +454,12 @@ header {
 
 <div id="toast">Sucesso!</div>
 
+<!-- Botão de Ajuda -->
 <div class="help-fab" onclick="toggleModal('modal-tutorial', true)">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
 </div>
 
+<!-- Indicador de Pull to Refresh -->
 <div id="ptr-indicator">
     <span id="ptr-text">SOLTE PARA ATUALIZAR</span>
 </div>
@@ -460,6 +483,7 @@ header {
         <div class="card-value" id="res-debt-bruta">R$ 0,00</div>
       </div>
       
+      <!-- NOVA PARTE: RENDA E SOBRA -->
       <div class="card card-full card-sobra" onclick="toggleModal('modal-income', true)">
         <button class="btn-edit-inline">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -517,46 +541,57 @@ header {
   </div>
 </div>
 
+<!-- Modal Tutorial -->
 <div class="modal-overlay" id="modal-tutorial">
   <div class="modal">
     <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.4rem;">Como Funciona? 🚀</div>
-    <div class="tutorial-step" style="margin-bottom: 24px;">
-      <h4 style="color: var(--accent); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">💰 Renda e Sobra</h4>
-      <p style="font-size: 0.9rem; color: var(--secondary);">Clique no card verde no topo para definir sua <span style="color: var(--accent); font-weight: 700;">renda mensal</span> e quanto você <span style="color: var(--accent); font-weight: 700;">já tem em mãos</span>. O app calculará o saldo final.</p>
+    
+    <div class="tutorial-step">
+      <h4>💰 Renda e Sobra</h4>
+      <p>Clique no card verde no topo para definir sua <span style="color: var(--accent); font-weight: 700;">renda mensal</span> e quanto você <span style="color: var(--accent); font-weight: 700;">já tem em mãos</span>. O app calculará o saldo final.</p>
     </div>
-    <div class="tutorial-step" style="margin-bottom: 24px;">
-      <h4 style="color: var(--accent); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">✏️ Edição de Gastos</h4>
-      <p style="font-size: 0.9rem; color: var(--secondary);">Você pode <span style="color: var(--accent); font-weight: 700;">editar</span> qualquer gasto a qualquer momento. Basta clicar na descrição do item na lista para abrir o formulário de edição.</p>
+
+    <div class="tutorial-step">
+      <h4>✏️ Edição de Gastos</h4>
+      <p>Você pode <span style="color: var(--accent); font-weight: 700;">editar</span> qualquer gasto a qualquer momento. Basta clicar na descrição do item na lista para abrir o formulário de edição.</p>
     </div>
-    <div class="tutorial-step" style="margin-bottom: 24px;">
-      <h4 style="color: var(--accent); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">🔔 Alertas de Vencimento</h4>
-      <p style="font-size: 0.9rem; color: var(--secondary);">Fique tranquilo! O app irá te <span style="color: var(--warning); font-weight: 700;">notificar de forma direta</span> sobre vencimentos para garantir que você não esqueça de pagar.</p>
+
+    <div class="tutorial-step">
+      <h4>🔔 Alertas de Vencimento</h4>
+      <p>Fique tranquilo! O app irá te <span style="color: var(--warning); font-weight: 700;">notificar de forma direta</span> sobre vencimentos para garantir que você não esqueça de pagar.</p>
     </div>
-    <div class="tutorial-step" style="margin-bottom: 24px;">
-      <h4 style="color: var(--accent); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">📌 Gastos Fixos</h4>
-      <p style="font-size: 0.9rem; color: var(--secondary);">Contas que se repetem todo mês. Quando você cria aqui, o app gera automaticamente para todos os meses futuros.</p>
+
+    <div class="tutorial-step">
+      <h4>📌 Gastos Fixos</h4>
+      <p>Contas que se repetem todo mês. Quando você cria aqui, o app gera automaticamente para todos os meses futuros.</p>
     </div>
+
     <button class="btn-primary" onclick="toggleModal('modal-tutorial', false)">ENTENDI, VAMOS LÁ!</button>
   </div>
 </div>
 
+<!-- Modal de Renda -->
 <div class="modal-overlay" id="modal-income">
   <div class="modal">
     <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem;">Disponível no Mês</div>
     <p style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 20px;">Informe seus ganhos para calcularmos a sua sobra.</p>
+    
     <div class="input-group">
       <label>Renda a Receber no Mês (R$)</label>
       <input type="text" id="in-income-val" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
     </div>
+    
     <div class="input-group">
       <label>Quanto tenho hoje (Em mãos) (R$)</label>
       <input type="text" id="in-balance-val" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
     </div>
+
     <button class="btn-primary" onclick="saveIncome()">DEFINIR GANHOS</button>
     <button class="btn-ghost" onclick="toggleModal('modal-income', false)">CANCELAR</button>
   </div>
 </div>
 
+<!-- Modais de Gasto -->
 <div class="modal-overlay" id="modal-add">
   <div class="modal">
     <div class="modal-header" id="modal-title" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem;">Novo Registro</div>
@@ -573,6 +608,7 @@ header {
         <option value="parcelas">💳 Parcelamento</option>
       </select>
     </div>
+    
     <div class="input-group">
       <label>Categoria</label>
       <div class="cat-selector-trigger" onclick="toggleCatGrid()">
@@ -580,8 +616,11 @@ header {
         <span>▼</span>
       </div>
       <input type="hidden" id="in-cat" value="moradia">
-      <div class="cat-grid" id="cat-grid"></div>
+      <div class="cat-grid" id="cat-grid">
+        <!-- Renderizado via JavaScript -->
+      </div>
     </div>
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
       <div class="input-group">
         <label>Valor (R$)</label>
@@ -592,6 +631,7 @@ header {
         <input type="text" id="in-due" placeholder="Dia 10">
       </div>
     </div>
+
     <button class="btn-primary" onclick="saveExpense()">SALVAR</button>
     <button class="btn-ghost" onclick="toggleModal('modal-add', false)">CANCELAR</button>
   </div>
@@ -637,13 +677,18 @@ header {
 let alertSequenceInterval = null;
 let stopAllAlerts = false;
 
+// FUNÇÃO DE MÁSCARA MONETÁRIA
 function maskMoney(input) {
   let value = input.value.replace(/\D/g, "");
-  if (value === "") { input.value = ""; return; }
+  if (value === "") {
+    input.value = "";
+    return;
+  }
   value = (parseInt(value) / 100).toFixed(2);
   input.value = fmt(parseFloat(value));
 }
 
+// Converte String Formatada (R$ 1.234,56) para Float (1234.56)
 function parseMoney(str) {
   if (!str) return 0;
   let cleanValue = str.toString().replace(/[^\d,]/g, "").replace(",", ".");
@@ -655,21 +700,11 @@ const setupPWA = () => {
   const manifest = { "name": "Meu Controle Financeiro", "short_name": "Finanças", "start_url": ".", "display": "standalone", "background_color": "#020617", "theme_color": "#020617", "icons": [{ "src": iconData, "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }] };
   const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
   document.querySelector('#pwa-manifest').setAttribute('href', URL.createObjectURL(blob));
-  
   if ('serviceWorker' in navigator) {
     const swCode = `
       self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
       self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-      self.addEventListener('message', event => {
-        if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-          self.registration.showNotification(event.data.title, {
-            body: event.data.body,
-            icon: "${iconData}",
-            badge: "${iconData}",
-            tag: event.data.tag
-          });
-        }
-      });
+      self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => {})));
     `;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'}))).catch(() => {});
   }
@@ -746,6 +781,7 @@ function selectCategory(key) {
   setTimeout(() => { document.getElementById('cat-grid').classList.remove('show'); }, 200);
 }
 
+// LÓGICA DE RENDA
 function saveIncome() {
   const income = parseMoney(document.getElementById('in-income-val').value);
   const balance = parseMoney(document.getElementById('in-balance-val').value);
@@ -759,7 +795,8 @@ function saveIncome() {
 function startRecurringAlerts() {
     if (stopAllAlerts) return;
     checkExpiringBills();
-    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 20000);
+    // Verifica a cada 2 minutos
+    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 120000);
 }
 
 function stopAlertSequence() {
@@ -798,7 +835,9 @@ function checkExpiringBills() {
   const today = new Date();
   today.setHours(0,0,0,0);
   const expiring = [];
+  
   if (!state.months[key]) return;
+  
   const allCurrent = [...state.months[key].fixos, ...state.months[key].variaveis];
   
   allCurrent.forEach(item => {
@@ -809,12 +848,17 @@ function checkExpiringBills() {
         const dueDate = new Date(curYear, curMonth, parseInt(dayMatch[0]));
         dueDate.setHours(0,0,0,0);
         const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0 && diffDays <= 1) { expiring.push({ ...item, diffDays }); }
+        
+        // MOSTRA APENAS SE VENCE HOJE (0) OU AMANHÃ (1)
+        if (diffDays >= 0 && diffDays <= 1) {
+            expiring.push({ ...item, diffDays });
+        }
       }
     }
   });
 
   if (expiring.length > 0) {
+    // Renderiza lista no modal
     document.getElementById('alert-list').innerHTML = expiring.map(i => `
       <div class="alert-item">
         <div>
@@ -825,20 +869,24 @@ function checkExpiringBills() {
       </div>
     `).join('');
     
+    // Abre o modal visual se não houver nada aberto e não estiver silenciado
     const isAnyModalOpen = document.querySelector('.modal-overlay.open');
-    if (!isAnyModalOpen && !stopAllAlerts) { toggleModal('modal-alerts', true); }
+    if (!isAnyModalOpen && !stopAllAlerts) {
+        toggleModal('modal-alerts', true);
+    }
 
+    // Notificação Nativa
     if ("Notification" in window && Notification.permission === "granted") {
         expiring.forEach(item => {
+            const tag = `vence-${item.id}-${curMonth}`;
             const labelDia = item.diffDays === 0 ? 'HOJE' : 'AMANHÃ';
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'SHOW_NOTIFICATION',
-                    title: "CONTA VENCENDO!",
-                    body: `${item.name} (${fmt(item.amount)}) vence ${labelDia}. Não esqueça!`,
-                    tag: `vence-${item.id}`
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("PAGAMENTO PRÓXIMO!", {
+                    body: `Alerta: ${item.name} (${fmt(item.amount)}) vence ${labelDia}.`,
+                    tag: tag,
+                    requireInteraction: false
                 });
-            }
+            });
         });
     }
   }
@@ -875,6 +923,7 @@ function render() {
   const pendingMonth = Math.max(0, totalWithPrev - paidMonth);
   const bruteTotal = pendingMonth + parcelasTotalPendente;
 
+  // CÁLCULO DE SOBRA CONSIDERANDO RENDA + SALDO EM MÃOS
   const totalAvailable = income + balance;
   const leftover = totalAvailable - totalMonthBruto;
 
@@ -1044,7 +1093,9 @@ scroller.addEventListener('touchstart', (e) => { if (scroller.scrollTop === 0) s
 scroller.addEventListener('touchmove', (e) => {
     const y = e.touches[0].pageY;
     const diff = y - startY;
-    if (scroller.scrollTop === 0 && diff > 0) { indicator.style.height = Math.min(diff * 0.4, 60) + 'px'; }
+    if (scroller.scrollTop === 0 && diff > 0) {
+        indicator.style.height = Math.min(diff * 0.4, 60) + 'px';
+    }
 }, { passive: true });
 scroller.addEventListener('touchend', (e) => {
     const diff = e.changedTouches[0].pageY - startY;
@@ -1055,14 +1106,17 @@ window.onload = () => {
     setupPWA(); 
     load(); 
     render(); 
+    
+    // Inicia verificador de alertas
     if ("Notification" in window) {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") { startRecurringAlerts(); }
+        Notification.requestPermission().then(() => {
+            startRecurringAlerts();
         });
-    } else { startRecurringAlerts(); }
+    } else {
+        startRecurringAlerts();
+    }
 };
 </script>
 </body>
 </html>
-
 
