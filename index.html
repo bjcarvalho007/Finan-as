@@ -491,9 +491,9 @@ header {
         <button class="btn-edit-inline">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        <div class="card-label" style="color: rgba(255,255,255,0.7)">Sobra Estimada (No Mês)</div>
+        <div class="card-label" style="color: rgba(255,255,255,0.7)">Sobra Estimada (Saldo Total)</div>
         <div class="card-value" id="res-leftover" style="color: var(--accent)">R$ 0,00</div>
-        <div class="card-legend" id="res-income-label" style="color: rgba(255,255,255,0.5)">SOBRE RENDA DE R$ 0,00</div>
+        <div class="card-legend" id="res-income-label" style="color: rgba(255,255,255,0.5)">SOBRE DISPONÍVEL DE R$ 0,00</div>
       </div>
 
       <div class="card">
@@ -551,7 +551,7 @@ header {
     
     <div class="tutorial-step">
       <h4>💰 Renda e Sobra</h4>
-      <p>Clique no card verde no topo para definir sua <span style="color: var(--accent); font-weight: 700;">renda mensal</span>. O app calculará automaticamente quanto sobrará após subtrair suas contas do mês.</p>
+      <p>Clique no card verde no topo para definir sua <span style="color: var(--accent); font-weight: 700;">renda mensal</span> e quanto você <span style="color: var(--accent); font-weight: 700;">já tem em mãos</span>. O app calculará o saldo final.</p>
     </div>
 
     <div class="tutorial-step">
@@ -576,13 +576,20 @@ header {
 <!-- Modal de Renda -->
 <div class="modal-overlay" id="modal-income">
   <div class="modal">
-    <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem;">Renda do Mês</div>
-    <p style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 20px;">Informe quanto você vai receber este mês para calcularmos a sua sobra.</p>
+    <div class="modal-header" style="margin-bottom: 20px; font-weight: 800; font-size: 1.2rem;">Disponível no Mês</div>
+    <p style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 20px;">Informe seus ganhos para calcularmos a sua sobra.</p>
+    
     <div class="input-group">
-      <label>Valor da Renda (R$)</label>
+      <label>Renda a Receber no Mês (R$)</label>
       <input type="text" id="in-income-val" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
     </div>
-    <button class="btn-primary" onclick="saveIncome()">DEFINIR RENDA</button>
+    
+    <div class="input-group">
+      <label>Quanto tenho hoje (Em mãos) (R$)</label>
+      <input type="text" id="in-balance-val" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
+    </div>
+
+    <button class="btn-primary" onclick="saveIncome()">DEFINIR GANHOS</button>
     <button class="btn-ghost" onclick="toggleModal('modal-income', false)">CANCELAR</button>
   </div>
 </div>
@@ -743,8 +750,9 @@ function save() {
 
 function syncData() {
   const key = getDbKey();
-  if (!state.months[key]) state.months[key] = { fixos: [], variaveis: [], income: 0 };
+  if (!state.months[key]) state.months[key] = { fixos: [], variaveis: [], income: 0, balance: 0 };
   if (state.months[key].income === undefined) state.months[key].income = 0;
+  if (state.months[key].balance === undefined) state.months[key].balance = 0;
   
   state.fixosMaster.forEach(master => {
     const exists = state.months[key].fixos.find(f => f.masterId === master.id);
@@ -778,11 +786,13 @@ function selectCategory(key) {
 
 // LÓGICA DE RENDA
 function saveIncome() {
-  const val = parseMoney(document.getElementById('in-income-val').value);
-  state.months[getDbKey()].income = val;
+  const income = parseMoney(document.getElementById('in-income-val').value);
+  const balance = parseMoney(document.getElementById('in-balance-val').value);
+  state.months[getDbKey()].income = income;
+  state.months[getDbKey()].balance = balance;
   save();
   toggleModal('modal-income', false);
-  showToast("Renda atualizada!");
+  showToast("Ganhos atualizados!");
 }
 
 function startRecurringAlerts() {
@@ -902,6 +912,7 @@ function render() {
   const key = getDbKey();
   const monthData = state.months[key];
   const income = monthData.income || 0;
+  const balance = monthData.balance || 0;
   const prevDebt = getPreviousDebt();
   const parcelasTotalPendente = state.parcelamentos.reduce((s, i) => s + i.amount, 0);
   
@@ -914,7 +925,9 @@ function render() {
   const pendingMonth = Math.max(0, totalWithPrev - paidMonth);
   const bruteTotal = pendingMonth + parcelasTotalPendente;
 
-  const leftover = income - totalMonthBruto;
+  // CÁLCULO DE SOBRA CONSIDERANDO RENDA + SALDO EM MÃOS
+  const totalAvailable = income + balance;
+  const leftover = totalAvailable - totalMonthBruto;
 
   document.getElementById('display-date').textContent = `${MONTHS[curMonth].toUpperCase()} ${curYear}`;
   document.getElementById('res-debt-bruta').textContent = fmt(bruteTotal);
@@ -925,8 +938,10 @@ function render() {
   document.getElementById('prev-debt-indicator').style.display = prevDebt > 0 ? 'block' : 'none';
 
   document.getElementById('res-leftover').textContent = fmt(leftover);
-  document.getElementById('res-income-label').textContent = `SOBRE RENDA DE ${fmt(income)}`;
+  document.getElementById('res-income-label').textContent = `SOBRE DISPONÍVEL DE ${fmt(totalAvailable)}`;
+  
   document.getElementById('in-income-val').value = income > 0 ? fmt(income) : '';
+  document.getElementById('in-balance-val').value = balance > 0 ? fmt(balance) : '';
 
   let list = (currentTab === 'parcelas') ? state.parcelamentos : monthData[currentTab];
   const container = document.getElementById('expense-list');
