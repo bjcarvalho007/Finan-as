@@ -779,8 +779,13 @@ function saveIncome() {
 
 function startRecurringAlerts() {
     if (stopAllAlerts) return;
+    // Dispara imediatamente ao chamar a função
     checkExpiringBills();
-    alertSequenceInterval = setInterval(() => { if (!stopAllAlerts) checkExpiringBills(); }, 1800000);
+    // Repete a cada 20 segundos (20000 ms)
+    if (alertSequenceInterval) clearInterval(alertSequenceInterval);
+    alertSequenceInterval = setInterval(() => { 
+        if (!stopAllAlerts) checkExpiringBills(); 
+    }, 20000);
 }
 
 function stopAlertSequence() {
@@ -871,7 +876,11 @@ function checkExpiringBills() {
     `).join('');
     
     const isAnyModalOpen = document.querySelector('.modal-overlay.open');
-    if (!isAnyModalOpen && !stopAllAlerts) { toggleModal('modal-alerts', true); }
+    // Se o modal de alertas já estiver aberto, não faz nada para não interromper o usuário
+    // Se não houver modal aberto ou for outro modal, abrimos o de alertas (desde que não esteja silenciado)
+    if (!document.getElementById('modal-alerts').classList.contains('open') && !stopAllAlerts) { 
+        toggleModal('modal-alerts', true); 
+    }
 
     if ("Notification" in window && Notification.permission === "granted") {
         expiring.forEach(item => {
@@ -1100,11 +1109,16 @@ window.onload = () => {
     setupPWA(); 
     load(); 
     render(); 
+    
+    // Inicia a sequência de alertas imediatamente
     if ("Notification" in window) {
         Notification.requestPermission().then(permission => {
-            if (permission === "granted") { startRecurringAlerts(); }
+            // Independente da permissão, tentamos rodar o alerta interno
+            startRecurringAlerts();
         });
-    } else { startRecurringAlerts(); }
+    } else { 
+        startRecurringAlerts(); 
+    }
 };
 </script>
 </body>
