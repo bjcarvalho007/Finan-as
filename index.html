@@ -835,6 +835,111 @@ header {
   color: #fff;
 }
 
+/* ESTILOS ADICIONAIS DO DASHBOARD AVANÇADO */
+.db-score-card {
+  background: linear-gradient(135deg, rgba(22, 30, 50, 0.8) 0%, rgba(10, 15, 30, 0.9) 100%);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: var(--shadow);
+}
+
+.db-circle-progress {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+}
+
+.db-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 8;
+}
+
+.db-circle-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease-out, stroke 0.4s;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.db-circle-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #fff;
+}
+
+.db-circle-subtext {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.55rem;
+  color: var(--secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.db-macro-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  margin-top: 10px;
+}
+
+.db-macro-segment {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.db-macro-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.db-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+.db-legend-color {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.db-analyt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.db-stat-small {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
 @media (min-width: 600px) {
   .modal { border-radius: 24px; margin-bottom: 24px; }
   .modal-overlay { align-items: center; }
@@ -887,7 +992,8 @@ header {
       <button class="btn-add" onclick="openAddModal()">ADICIONAR</button>
     </header>
 
-    <div class="summary-grid">
+    <!-- ADICIONADO ID SUMMARY-GRID PARA PERMITIR OCULTAÇÃO EXCLUSIVA NO DASHBOARD -->
+    <div class="summary-grid" id="summary-grid">
       <div class="card card-full">
         <div class="card-label">Estimativa Total Devedora</div>
         <div class="card-value" id="res-debt-bruta">R$ 0,00</div>
@@ -1195,7 +1301,7 @@ function saveIncome() {
   state.months[getDbKey()].balance = balance;
   save();
   toggleModal('modal-income', false);
-  showToast("Ganhos atualizados!");
+  showToast("Ganhos updated!");
 }
 
 function startRecurringAlerts() {
@@ -1291,8 +1397,6 @@ function checkExpiringBills() {
   });
 
   if (expiring.length > 0) {
-    // ATUALIZAÇÃO: Em vez de forçar o modal grande de bloqueio de tela direto,
-    // nós mostramos um card flutuante bonito, leve e animado no rodapé da tela.
     const count = expiring.length;
     const labelTitle = count === 1 ? `1 Conta Vencendo!` : `${count} Contas Vencendo!`;
     const labelDesc = count === 1 
@@ -1302,12 +1406,10 @@ function checkExpiringBills() {
     document.getElementById('floating-title').textContent = labelTitle;
     document.getElementById('floating-desc').textContent = labelDesc;
     
-    // Exibe o card flutuante se o usuário não pediu para parar ou se não há modais bloqueando o fluxo
     if (!stopAllAlerts) {
       document.getElementById('floating-alert').classList.add('show');
     }
 
-    // Configuração do modal original de segurança (caso o usuário decida gerenciar em lista por lá)
     document.getElementById('alert-list').innerHTML = expiring.map(i => `
       <div class="alert-item">
         <div>
@@ -1361,6 +1463,7 @@ function render() {
   const allCurrent = [...monthData.fixos, ...monthData.variaveis];
   const totalMonthBruto = allCurrent.reduce((s, i) => s + i.amount, 0);
   const totalFixosBruto = monthData.fixos.reduce((s, i) => s + i.amount, 0);
+  const totalVariaveisBruto = monthData.variaveis.reduce((s, i) => s + i.amount, 0);
   
   const totalWithPrev = totalMonthBruto + prevDebt;
   const paidMonth = allCurrent.reduce((s, i) => s + (i.paid_amount || 0), 0);
@@ -1386,53 +1489,184 @@ function render() {
 
   const container = document.getElementById('expense-list');
 
-  // RENDER SEÇÃO DASHBOARD
+  // CONTROLE DE EXIBIÇÃO: SE FOR DASHBOARD, OCULTA OS CARD PANÉIS DA PARTE SUPERIOR (OUTRAS ABAS)
+  const summaryGrid = document.getElementById('summary-grid');
+  if (currentTab === 'dashboard') {
+    summaryGrid.style.display = 'none';
+  } else {
+    summaryGrid.style.display = 'grid';
+  }
+
+  // MUDANÇA EXCLUSIVA: NOVO DASHBOARD FINANCEIRO PROFISSIONAL AVANÇADO E COMPLETO
   if (currentTab === 'dashboard') {
     const totalDespesas = allCurrent.reduce((s, i) => s + i.amount, 0);
     const count = allCurrent.length;
+    
+    // Médias financeiras de consumo
     const avgValue = count > 0 ? (totalDespesas / count) : 0;
     
-    // Cálculo de Categorias para o Dashboard
+    // Descobrir o Maior Gasto Individual lançado
+    let highestExpense = { name: "Nenhum", amount: 0 };
+    allCurrent.forEach(item => {
+      if (item.amount > highestExpense.amount) {
+        highestExpense = { name: item.name, amount: item.amount };
+      }
+    });
+
+    // Proporções macro de distribuição (Fixas, Variáveis e Parceladas)
+    const totalRecorrente = totalFixosBruto;
+    const totalFlutuante = totalVariaveisBruto;
+    const totalInstalment = parcelasTotalPendente;
+    const sumAllAvenues = totalRecorrente + totalFlutuante + totalInstalment;
+    
+    const pctFixos = sumAllAvenues > 0 ? Math.round((totalRecorrente / sumAllAvenues) * 100) : 0;
+    const pctVariaveis = sumAllAvenues > 0 ? Math.round((totalFlutuante / sumAllAvenues) * 100) : 0;
+    const pctParcelas = sumAllAvenues > 0 ? Math.round((totalInstalment / sumAllAvenues) * 100) : 0;
+
+    // Estatísticas por Categorias
     const catAnalysis = {};
     allCurrent.forEach(item => {
       catAnalysis[item.cat] = (catAnalysis[item.cat] || 0) + item.amount;
     });
-    
     const sortedCategories = Object.entries(catAnalysis).sort((a,b) => b[1] - a[1]);
-    const paidPct = totalDespesas > 0 ? Math.round((paidMonth / totalDespesas) * 100) : 0;
-    
+
+    // Cálculo Inteligente do "Financial Health Score" (0-100)
+    // Formula baseia-se na liquidez operacional (Sobra vs Ganhos) e compromisso em quitação de faturas
+    let healthScore = 100;
+    if (totalAvailable > 0) {
+      const comprometimento = (totalDespesas / totalAvailable) * 100;
+      // Descontar pontuação baseado no comprometimento de renda (ideal até 60% da renda)
+      if (comprometimento > 60) {
+        healthScore -= Math.min(45, Math.round((comprometimento - 60) * 1.1));
+      }
+    } else {
+      healthScore = 50; // Sem ganhos cadastrados, neutro
+    }
+    // Bonificar por contas quitadas
+    const percentualPago = totalDespesas > 0 ? (paidMonth / totalDespesas) * 100 : 0;
+    healthScore += Math.round(percentualPago * 0.2);
+    // Garantir limites 0 a 100
+    healthScore = Math.max(10, Math.min(100, healthScore));
+
+    // Determinar classe de cor do score
+    let scoreColor = "var(--accent)"; // Saudável (>75)
+    let scoreText = "Excelente";
+    if (healthScore < 50) { scoreColor = "var(--danger)"; scoreText = "Crítico"; }
+    else if (healthScore < 75) { scoreColor = "var(--warning)"; scoreText = "Alerta"; }
+
+    // Projeções para o próximo mês
+    // Próximo mês assume a manutenção dos custos Fixos Master ativos e o saldo de parcelas
+    const custosFixosProximoMes = state.fixosMaster.reduce((s, i) => s + i.amount, 0);
+    const projecaoInicialProximoMes = custosFixosProximoMes + totalInstalment;
+
+    // Parâmetro do círculo de progresso do score
+    const circumference = 2 * Math.PI * 38;
+    const strokeDashoffset = circumference - (healthScore / 100) * circumference;
+
+    // Geração dinâmica do Parecer / Análise profissional
+    let parecerIA = "";
+    if (count === 0) {
+      parecerIA = "<strong>Aguardando Lançamentos:</strong> Insira seus custos fixos e variáveis para que a IA gere os pareceres de liquidez e projeções orçamentárias.";
+    } else {
+      const sobraPorcentagem = totalAvailable > 0 ? Math.round((leftover / totalAvailable) * 100) : 0;
+      if (sobraPorcentagem <= 0) {
+        parecerIA = `⚠️ <strong>Déficit Orçamentário Detectado:</strong> Suas saídas representam <strong>${Math.round((totalDespesas / (totalAvailable || 1)) * 100)}%</strong> de seus ganhos. Seu maior centro de custo individual é <strong>"${highestExpense.name}"</strong>. Recomendamos revisar imediatamente as despesas variáveis para restaurar sua saúde líquida.`;
+      } else if (sobraPorcentagem < 20) {
+        parecerIA = `⚖️ <strong>Liquidez Operacional Baixa:</strong> Você possui uma margem líquida de <strong>${sobraPorcentagem}%</strong> (${fmt(leftover)}). Embora esteja no azul, qualquer gasto imprevisto pode comprometer o período. Evite assumir novos parcelamentos no curto prazo.`;
+      } else {
+        parecerIA = `💎 <strong>Excelente Alocação Orçamentária:</strong> Você preservou <strong>${sobraPorcentagem}%</strong> de sua receita total. Sua capacidade de poupança está saudável. Considere direcionar a sobra estimada de <strong>${fmt(leftover)}</strong> para investimentos de liquidez ou fundo de emergência.`;
+      }
+    }
+
     let dashboardHtml = `
       <div class="dashboard-container">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="card">
-            <div class="card-label">Média por Item</div>
-            <div class="card-value" style="font-size:1.15rem;">${fmt(avgValue)}</div>
-            <div class="card-legend" style="color:var(--secondary)">Total: ${count} registros</div>
+        <!-- SCORE DE SAÚDE FINANCEIRA -->
+        <div class="db-score-card">
+          <div class="db-circle-progress">
+            <svg width="84" height="84" viewBox="0 0 84 84">
+              <circle class="db-circle-bg" cx="42" cy="42" r="38"></circle>
+              <circle class="db-circle-fill" cx="42" cy="42" r="38" 
+                stroke="${scoreColor}" 
+                stroke-dasharray="${circumference}" 
+                stroke-dashoffset="${strokeDashoffset}">
+              </circle>
+            </svg>
+            <div class="db-circle-text">
+              <span>${healthScore}</span>
+              <span class="db-circle-subtext">Pontos</span>
+            </div>
           </div>
-          <div class="card">
-            <div class="card-label">Progresso Pago</div>
-            <div class="card-value" style="font-size:1.15rem; color:var(--accent)">${paidPct}%</div>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" style="width: ${paidPct}%"></div>
+          <div>
+            <h3 style="font-size:0.95rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:6px;">
+              Saúde de Caixa: <span style="color:${scoreColor}">${scoreText}</span>
+            </h3>
+            <p style="font-size:0.75rem; color:var(--secondary); margin-top:4px; line-height:1.3;">
+              Análise em tempo real baseada em sua taxa de comprometimento de renda de <strong>${totalAvailable > 0 ? Math.round((totalDespesas / totalAvailable) * 100) : 0}%</strong> e amortização de faturas.
+            </p>
+          </div>
+        </div>
+
+        <!-- INSIGHT BOX ANALÍTICO DA INTELIGÊNCIA -->
+        <div class="insight-box" style="background: rgba(99, 102, 241, 0.05); border-left-color: var(--indigo);">
+          ${parecerIA}
+        </div>
+
+        <!-- VISUALIZAÇÃO DOS INDICADORES E METAS CHAVE -->
+        <div class="db-analyt-grid">
+          <div class="db-stat-small">
+            <div class="card-label" style="font-size:0.6rem;">Maior Despesa</div>
+            <div class="card-value" style="font-size:1.1rem; color: var(--danger); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="${highestExpense.name}">${fmt(highestExpense.amount)}</div>
+            <div class="card-legend" style="color:var(--secondary); text-transform:uppercase; font-size:0.55rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${highestExpense.name}</div>
+          </div>
+          <div class="db-stat-small">
+            <div class="card-label" style="font-size:0.6rem;">Custo Médio / Item</div>
+            <div class="card-value" style="font-size:1.1rem;">${fmt(avgValue)}</div>
+            <div class="card-legend" style="color:var(--secondary); font-size:0.55rem;">Calculado de ${count} registros</div>
+          </div>
+          <div class="db-stat-small">
+            <div class="card-label" style="font-size:0.6rem;">Comprometido Fixo</div>
+            <div class="card-value" style="font-size:1.1rem; color: var(--warning);">${totalAvailable > 0 ? Math.round((totalRecorrente / totalAvailable) * 100) : 0}%</div>
+            <div class="card-legend" style="color:var(--secondary); font-size:0.55rem;">Renda direcionada a Fixos</div>
+          </div>
+          <div class="db-stat-small">
+            <div class="card-label" style="font-size:0.6rem;">Projeção Próx. Mês</div>
+            <div class="card-value" style="font-size:1.1rem; color: var(--indigo);">${fmt(projecaoInicialProximoMes)}</div>
+            <div class="card-legend" style="color:var(--secondary); font-size:0.55rem;">Fixos + Parcelas ativas</div>
+          </div>
+        </div>
+
+        <!-- DISTRIBUIÇÃO OPERACIONAL DO CAIXA -->
+        <div class="card" style="background:rgba(22, 30, 50, 0.4); padding:16px;">
+          <h4 style="font-size:0.75rem; font-weight:800; color:var(--secondary); text-transform:uppercase; letter-spacing:0.5px;">Composição de Custos Operacionais</h4>
+          <div class="db-macro-bar">
+            <div class="db-macro-segment" style="width: ${pctFixos}%; background: var(--indigo);" title="Fixos"></div>
+            <div class="db-macro-segment" style="width: ${pctVariaveis}%; background: var(--accent);" title="Variáveis"></div>
+            <div class="db-macro-segment" style="width: ${pctParcelas}%; background: var(--warning);" title="Parcelas"></div>
+          </div>
+          <div class="db-macro-legend">
+            <div class="db-legend-item">
+              <span class="db-legend-color" style="background: var(--indigo)"></span>
+              <span>Fixos: ${pctFixos}% (${fmt(totalRecorrente)})</span>
+            </div>
+            <div class="db-legend-item">
+              <span class="db-legend-color" style="background: var(--accent)"></span>
+              <span>Variáveis: ${pctVariaveis}% (${fmt(totalFlutuante)})</span>
+            </div>
+            <div class="db-legend-item">
+              <span class="db-legend-color" style="background: var(--warning)"></span>
+              <span>Parcelas: ${pctParcelas}% (${fmt(totalInstalment)})</span>
             </div>
           </div>
         </div>
 
-        <div class="insight-box">
-          <strong>💡 Análise Inteligente:</strong><br>
-          ${count === 0 
-            ? "Nenhum gasto lançado este mês para gerar análises estatísticas." 
-            : `Você possui um gasto total de <strong>${fmt(totalDespesas)}</strong> ativo este mês. Já quitou <strong>${fmt(paidMonth)}</strong> do total e ainda restam <strong>${fmt(pendingMonth)}</strong> em aberto.`
-          }
-        </div>
-
+        <!-- LISTA ANALÍTICA POR CATEGORIA -->
         <div>
-          <h3 style="font-size:0.85rem; font-weight:800; color:var(--secondary); text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">Gastos por Categorias</h3>
+          <h3 style="font-size:0.85rem; font-weight:800; color:var(--secondary); text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">Detalhamento por Setor Econômico</h3>
           <div class="category-stats-list">
     `;
 
     if (sortedCategories.length === 0) {
-      dashboardHtml += `<div style="text-align:center; padding:40px 20px; color:var(--secondary); font-size:0.85rem; opacity:0.4;">SEM DADOS DE CATEGORIAS</div>`;
+      dashboardHtml += `<div style="text-align:center; padding:40px 20px; color:var(--secondary); font-size:0.85rem; opacity:0.4;">SEM DADOS DE CATEGORIAS LANÇADOS</div>`;
     } else {
       sortedCategories.forEach(([catKey, val]) => {
         const catInfo = CATEGORIES[catKey] || CATEGORIES.outros;
@@ -1446,11 +1680,11 @@ function render() {
               </div>
               <div class="category-stat-values">
                 <div class="category-stat-amount">${fmt(val)}</div>
-                <div class="category-stat-pct">${pct}% do mês</div>
+                <div class="category-stat-pct">${pct}% das saídas</div>
               </div>
             </div>
             <div class="category-stat-bar">
-              <div class="category-stat-fill" style="width: ${pct}%"></div>
+              <div class="category-stat-fill" style="width: ${pct}%; background: ${pct > 40 ? 'var(--danger)' : pct > 20 ? 'var(--warning)' : 'var(--indigo)'}"></div>
             </div>
           </div>
         `;
@@ -1517,7 +1751,6 @@ function openAddModal() {
   document.getElementById('in-name').value = ''; 
   document.getElementById('in-amount').value = '';
   document.getElementById('in-due').value = '';
-  // Se o usuário clicar em adicionar na aba de Dashboard, definimos para adicionar uma conta fixa por padrão
   document.getElementById('in-type').value = currentTab === 'dashboard' ? 'fixos' : currentTab;
   selectCategory('moradia');
   toggleModal('modal-add', true);
