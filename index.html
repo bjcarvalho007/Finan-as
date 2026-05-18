@@ -779,9 +779,7 @@ function saveIncome() {
 
 function startRecurringAlerts() {
     if (stopAllAlerts) return;
-    // Dispara imediatamente ao chamar a função
     checkExpiringBills();
-    // Repete a cada 20 segundos (20000 ms)
     if (alertSequenceInterval) clearInterval(alertSequenceInterval);
     alertSequenceInterval = setInterval(() => { 
         if (!stopAllAlerts) checkExpiringBills(); 
@@ -876,8 +874,6 @@ function checkExpiringBills() {
     `).join('');
     
     const isAnyModalOpen = document.querySelector('.modal-overlay.open');
-    // Se o modal de alertas já estiver aberto, não faz nada para não interromper o usuário
-    // Se não houver modal aberto ou for outro modal, abrimos o de alertas (desde que não esteja silenciado)
     if (!document.getElementById('modal-alerts').classList.contains('open') && !stopAllAlerts) { 
         toggleModal('modal-alerts', true); 
     }
@@ -956,13 +952,25 @@ function render() {
     const cat = CATEGORIES[item.cat] || CATEGORIES.outros;
     const pAmount = item.paid_amount || 0;
     const isPaid = (item.amount - pAmount) <= 0 && currentTab !== 'parcelas';
+    
+    // Calcula mensagens dinâmicas e resumidas para pagamentos parciais e totais
+    let statusMeta = '';
+    if (currentTab !== 'parcelas') {
+      if (isPaid) {
+        statusMeta = item.paid_at ? ` • Pago em ${item.paid_at}` : ' • Pago';
+      } else if (pAmount > 0) {
+        const remaining = item.amount - pAmount;
+        statusMeta = ` • Falta ${fmt(remaining)}`;
+      }
+    }
+
     return `
       <div class="expense-item">
         <div class="item-left" onclick="editItem(${item.id})">
           <div class="item-icon">${cat.icon}</div>
           <div class="item-details">
             <div class="name">${item.name} ${isPaid ? '✅' : ''}</div>
-            <div class="meta">${item.due || 'D-?'} • ${item.cat.toUpperCase()}</div>
+            <div class="meta">${item.due || 'D-?'} • ${item.cat.toUpperCase()}${statusMeta}</div>
           </div>
         </div>
         <div class="item-right">
@@ -1065,7 +1073,22 @@ function confirmPayment() {
     if (item) { item.amount -= val; if (item.amount <= 0) state.parcelamentos = state.parcelamentos.filter(i => i.id !== currentPayId); }
   } else {
     const item = [...state.months[getDbKey()].fixos, ...state.months[getDbKey()].variaveis].find(i => i.id === currentPayId);
-    if (item) item.paid_amount = (item.paid_amount || 0) + val;
+    if (item) {
+      item.paid_amount = (item.paid_amount || 0) + val;
+      
+      // Se foi pago o valor total, registra data e hora atuais
+      if (item.paid_amount >= item.amount) {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        item.paid_at = `${day}/${month} às ${hours}:${minutes}`;
+      } else {
+        // Remove a data caso seja um pagamento parcial pendente
+        delete item.paid_at;
+      }
+    }
   }
   save(); 
   toggleModal('modal-pay', false);
@@ -1110,10 +1133,8 @@ window.onload = () => {
     load(); 
     render(); 
     
-    // Inicia a sequência de alertas imediatamente
     if ("Notification" in window) {
         Notification.requestPermission().then(permission => {
-            // Independente da permissão, tentamos rodar o alerta interno
             startRecurringAlerts();
         });
     } else { 
@@ -1123,4 +1144,5 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
