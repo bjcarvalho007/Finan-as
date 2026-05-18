@@ -940,6 +940,35 @@ header {
   padding: 12px 14px;
 }
 
+/* Novo layout para o input de Ganhos Extras com botão de somar e resetar */
+.input-extra-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-extra-add {
+  background: linear-gradient(135deg, var(--accent) 0%, #059669 100%);
+  border: none;
+  color: white;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-extra-add:active {
+  transform: scale(0.92);
+}
+
 @media (min-width: 600px) {
   .modal { border-radius: 24px; margin-bottom: 24px; }
   .modal-overlay { align-items: center; }
@@ -1092,7 +1121,21 @@ header {
       <label>Quanto tenho hoje (Em mãos) (R$)</label>
       <input type="text" id="in-balance-val" inputmode="numeric" placeholder="R$ 0,00" oninput="maskMoney(this)">
     </div>
-    <button class="btn-primary" onclick="saveIncome()">DEFINIR GANHOS</button>
+    <!-- ÁREA DE GANHOS EXTRAS CUMULATIVOS -->
+    <div class="input-group">
+      <label style="color: var(--accent); display:flex; justify-content:space-between;">
+        <span>➕ Ganhos Extras Acumulados</span>
+        <span id="extra-accumulated-label" style="font-family:'JetBrains Mono', monospace; font-weight:800; color:#fff;">R$ 0,00</span>
+      </label>
+      <div class="input-extra-row">
+        <input type="text" id="in-extra-input" inputmode="numeric" placeholder="Digitar novo extra: R$ 0,00" oninput="maskMoney(this)">
+        <button class="btn-extra-add" onclick="accumulateExtra()" title="Somar Ganho Extra">+</button>
+      </div>
+      <p style="font-size: 0.65rem; color: var(--secondary); margin-top: 6px;">
+        Digite o novo valor ganho (como serviços prestados ou freelancers) e clique em <strong>"+"</strong> para somar ao total acumulado deste mês.
+      </p>
+    </div>
+    <button class="btn-primary" style="margin-top:10px;" onclick="saveIncome()">DEFINIR GANHOS</button>
     <button class="btn-ghost" onclick="toggleModal('modal-income', false)">CANCELAR</button>
   </div>
 </div>
@@ -1185,6 +1228,9 @@ header {
 let alertSequenceInterval = null;
 let stopAllAlerts = false;
 
+// Variável temporária de controle para o acumulador do modal de Ganhos Extras
+let tempAccumulatedExtra = 0;
+
 function maskMoney(input) {
   let value = input.value.replace(/\D/g, "");
   if (value === "") { input.value = ""; return; }
@@ -1260,9 +1306,10 @@ function save() {
 
 function syncData() {
   const key = getDbKey();
-  if (!state.months[key]) state.months[key] = { fixos: [], variaveis: [], income: 0, balance: 0 };
+  if (!state.months[key]) state.months[key] = { fixos: [], variaveis: [], income: 0, balance: 0, extra: 0 };
   if (state.months[key].income === undefined) state.months[key].income = 0;
   if (state.months[key].balance === undefined) state.months[key].balance = 0;
+  if (state.months[key].extra === undefined) state.months[key].extra = 0; // Garantindo campo de extra no sync
   
   state.fixosMaster.forEach(master => {
     const exists = state.months[key].fixos.find(f => f.masterId === master.id);
@@ -1294,14 +1341,34 @@ function selectCategory(key) {
   setTimeout(() => { document.getElementById('cat-grid').classList.remove('show'); }, 200);
 }
 
+// NOVA FUNÇÃO: Soma cumulativa de extras, zerando o campo de input em seguida
+function accumulateExtra() {
+  const extraInputField = document.getElementById('in-extra-input');
+  const inputVal = parseMoney(extraInputField.value);
+  if (inputVal > 0) {
+    tempAccumulatedExtra += inputVal;
+    document.getElementById('extra-accumulated-label').textContent = fmt(tempAccumulatedExtra);
+    extraInputField.value = ''; // Zera o campo de digitação
+    showToast("Valor extra adicionado!");
+  }
+}
+
 function saveIncome() {
   const income = parseMoney(document.getElementById('in-income-val').value);
   const balance = parseMoney(document.getElementById('in-balance-val').value);
+  
+  // Salva o acumulado com qualquer valor final digitado no campo mas não enviado pelo botão
+  const extraInputField = document.getElementById('in-extra-input');
+  const finalInputVal = parseMoney(extraInputField.value);
+  const finalExtraValue = tempAccumulatedExtra + finalInputVal;
+
   state.months[getDbKey()].income = income;
   state.months[getDbKey()].balance = balance;
+  state.months[getDbKey()].extra = finalExtraValue; // Salva o total somado cumulativo
+  
   save();
   toggleModal('modal-income', false);
-  showToast("Ganhos updated!");
+  showToast("Ganhos atualizados!");
 }
 
 function startRecurringAlerts() {
@@ -1457,6 +1524,7 @@ function render() {
   const monthData = state.months[key];
   const income = monthData.income || 0;
   const balance = monthData.balance || 0;
+  const extra = monthData.extra || 0; // Coleta os ganhos extras armazenados
   const prevDebt = getPreviousDebt();
   const parcelasTotalPendente = state.parcelamentos.reduce((s, i) => s + i.amount, 0);
   
@@ -1470,7 +1538,8 @@ function render() {
   const pendingMonth = Math.max(0, totalWithPrev - paidMonth);
   const bruteTotal = pendingMonth + parcelasTotalPendente;
 
-  const totalAvailable = income + balance;
+  // SOMA DOS TRÊS: Renda + Dinheiro em Mãos + Ganhos Extras somados cumulativamente
+  const totalAvailable = income + balance + extra;
   const leftover = totalAvailable - totalMonthBruto;
 
   document.getElementById('display-date').textContent = `${MONTHS[curMonth].toUpperCase()} ${curYear}`;
@@ -1486,6 +1555,11 @@ function render() {
   
   document.getElementById('in-income-val').value = income > 0 ? fmt(income) : '';
   document.getElementById('in-balance-val').value = balance > 0 ? fmt(balance) : '';
+  
+  // Atualiza o estado temporário e o texto de acumulados
+  tempAccumulatedExtra = extra;
+  document.getElementById('extra-accumulated-label').textContent = fmt(extra);
+  document.getElementById('in-extra-input').value = '';
 
   const container = document.getElementById('expense-list');
 
@@ -1900,5 +1974,4 @@ window.onload = () => {
 </script>
 </body>
 </html>
-
 
